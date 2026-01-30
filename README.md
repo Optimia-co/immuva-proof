@@ -100,3 +100,8 @@ Proofs can be verified using:
 - third-party auditors
 - automated compliance pipelines
 - 
+## Specification
+
+The formal Immuva Proof specification is defined here:
+https://github.com/Optimia-co/immuva-proof-spec
+
