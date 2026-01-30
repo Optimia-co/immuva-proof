@@ -5,7 +5,7 @@
 If you discover a security vulnerability in Immuva Proof, please report it responsibly.
 
 Contact:
-security@immuva.io
+security@immuva.com
 
 Do not open public issues for security-sensitive matters.
 
