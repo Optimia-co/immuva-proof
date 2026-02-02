@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { verifyStub } from "@immuva/verifier";
+import { verifyStub } from "../index";
 import type { StubInput } from "@immuva/protocol";
 
 function normalizeVerdictForPrint(v: any) {
