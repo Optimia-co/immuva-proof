@@ -32,34 +32,10 @@ export type StubReceipt = {
   kind: string;
 };
 
-// --- Crypto suites (v1.1 extension, non-breaking) ---
-
-export type CryptoSuite =
-  | "IMMUVAv1-SHA256"
-  | "IMMUVAv2-ED25519-SHA256";
-
-export type SigningInfo = {
-  /**
-   * Cryptographic suite used to produce the signature.
-   * - Absent or undefined => implicit v1 (hash-only)
-   */
-  crypto_suite?: CryptoSuite;
-
-  /**
-   * Signature value.
-   * - v1: hex(sha256(canonical_event))
-   * - v2: Ed25519 signature over sha256(canonical_event)
-   */
-  signature: string;
-
-  /**
-   * Public key required for asymmetric suites (v2+).
-   * Must be absent for v1.
-   */
-  public_key?: string;
+export type StubSigning = {
+  public_key: string;
+  signature: string; // hex(sha256(canonical_event)) for now
 };
-
-export type StubSigning = SigningInfo;
 
 export type StubKeyBinding = {
   public_key: string;
@@ -114,10 +90,3 @@ export function receiptRank(kind: string): number | null {
   if (!m) return null;
   return parseInt(m[1], 10);
 }
-
-
-export * from "./crypto-suites.js";
-export * from "./time-anchor.js";
-export * from "./transparency-log.js";
-export * from "./proof-levels.js";
-export * from "./key-lifecycle.js";

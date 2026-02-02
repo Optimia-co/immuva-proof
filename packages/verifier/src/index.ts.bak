@@ -1,7 +1,4 @@
 import { sha256HexUtf8, canonicalizeJson } from "../../canonical/dist/index.js";
-import { createHash } from "node:crypto";
-import { verifyEd25519Signature } from "./crypto/ed25519.js";
-import { CRYPTO_SUITES } from "./crypto/suites.js";
 
 
 type ViolationCode =
@@ -48,15 +45,12 @@ export type StubReceipt = {
 };
 
 export type StubSigning = {
-  crypto_suite?: string;
-  public_key?: string;
+  public_key: string;
   signature: string; // hex(sha256(canonical_event)) for now
 };
 
 export type StubKeyBinding = {
-  key_id?: string;
-  public_key?: string;
-  key_status?: "ACTIVE" | "ROTATED" | "REVOKED";
+  public_key: string;
 };
 
 export type StubInput = {
@@ -120,17 +114,6 @@ function receiptRank(kind: string): number | null {
 function computeStatus(input: StubInput): { status: VerdictStatus; violations: ViolationCode[] } {
   const violations: ViolationCode[] = [];
   const ret = (status: VerdictStatus) => ({ status, violations });
-
-  // 0) crypto suite validation (v1.1)
-  if (input.signing?.crypto_suite) {
-    const suite = input.signing.crypto_suite as keyof typeof CRYPTO_SUITES;
-    if (!(suite in CRYPTO_SUITES)) return ret("INVALID");
-    const rule = CRYPTO_SUITES[suite];
-    if (rule.requires_public_key && !input.signing.public_key) {
-      return ret("INVALID");
-    }
-  }
-
   const receipts = input.receipts ?? [];
 
   // 1) receipt kind whitelist
@@ -145,48 +128,17 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
   // 3) ENV_ATTEST cannot be outcome basis
   if (input.outcome?.basis === "ENV_ATTEST") return ret("INVALID");
 
-  // 4) signature validation (v1 hash-only OR v2 ed25519)
+  // 4) signature model v1 (pragmatic): signature == sha256(canonical_event utf8) hex
   if (input.signing) {
     const canonical = input.canonical_event ?? "";
-
-    // v2: Ed25519 over sha256(canonical_event)
-    if (input.signing.crypto_suite === "IMMUVAv2-ED25519-SHA256") {
-      if (!input.signing.public_key) return ret("INVALID");
-      const ok = verifyEd25519Signature(
-        canonical,
-        input.signing.signature,
-        input.signing.public_key
-      );
-      if (!ok) return ret("INVALID");
-    }
-
-    // v1 (default): signature == sha256(canonical_event) hex
-    else {
-      const want = sha256HexUtf8(canonical);
-      if (input.signing.signature !== want) return ret("INVALID");
-    }
+    const want = sha256HexUtf8(canonical);
+    if (input.signing.signature !== want) return ret("INVALID");
   }
 
-  // 5) key binding & key_id validation (key_status optional)
-  if (input.signing?.crypto_suite === "IMMUVAv2-ED25519-SHA256") {
-    const pub = input.signing.public_key;
-    if (!pub) return ret("INVALID");
-
-    const kb = input.key_binding;
-    if (!kb) return ret("INVALID");
-
-    if (kb.public_key !== pub) return ret("INVALID");
-
-    if (!kb.key_id) return ret("INVALID");
-    const { sha256: want } = canonicalizeJson(input.canonical_event);
-    if (kb.key_id !== want) return ret("INVALID");
-
-    // key_status is OPTIONAL (opt-in lifecycle)
-    if (kb.key_status === "REVOKED") return ret("INVALID");
+  // 5) key binding must match signing
+  if (input.key_binding && input.signing) {
+    if (input.key_binding.public_key !== input.signing.public_key) return ret("INVALID");
   }
-
-
-
 
   // 6) non-equivocation: >1 distinct canonical event (canonicalized)
   if (input.canonical_events && input.canonical_events.length > 0) {
