@@ -1,0 +1,12 @@
+{
+  "name": "@immuva/registries",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "immuva-registries": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  }
+}

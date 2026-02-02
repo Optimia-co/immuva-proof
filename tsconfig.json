@@ -1,0 +1,28 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/registries"
+    },
+    {
+      "path": "./packages/conformance-runner"
+    },
+    {
+      "path": "./packages/canonical"
+    },
+    {
+      "path": "./packages/fsm"
+    },
+    {
+      "path": "./packages/verifier"
+    }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@immuva/canonical": [
+        "packages/canonical/src"
+      ]
+    }
+  }
+}

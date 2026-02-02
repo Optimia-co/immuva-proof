@@ -1,0 +1,34 @@
+{
+  "name": "immuva-proof",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node ./packages/conformance-runner/dist/cli.js run --profile core --spec ../immuva-proof-spec/conformance/v1",
+    "lint": "echo \"(add lint later)\"",
+    "conformance:core": "node ./packages/conformance-runner/dist/cli.js run --profile core --spec ../immuva-proof-spec/conformance/v1",
+    "registries:validate": "node ./packages/registries/dist/cli.js validate --spec ../immuva-proof-spec/registries/v1",
+    "clean": "rm -rf packages/*/dist packages/*/tsconfig.tsbuildinfo tsconfig.tsbuildinfo",
+    "check": "npm run clean && npm run build && npm run registries:validate && npm run conformance:core",
+    "conformance:tl": "node ./packages/conformance-runner/dist/cli.js run --profile tl --spec ../immuva-proof-spec/conformance/v1",
+    "conformance:policies": "node ./packages/conformance-runner/dist/cli.js run --profile policies --spec ../immuva-proof-spec/conformance/v1",
+    "check:all": "npm run clean && npm run build && npm run registries:validate && npm run conformance:core && npm run conformance:tl && npm run conformance:policies"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.3"
+  }
+}
