@@ -1,0 +1,25 @@
+Immuva Proof v1.0.0 — Normative Digest
+
+Spec:
+- immuva-proof-spec @ v1.0.0 (FROZEN)
+- Canonical encoding: frozen
+- Event model: frozen
+- Verdict contract: frozen
+- Security invariants: frozen
+- Registries v1: hash-locked
+
+Implementation:
+- immuva-proof verifier v1
+- Deterministic validation order
+- Offline-first
+- No trusted third party
+- Conformance: core, tl, policies (100%)
+
+Guarantee:
+- No false VALID
+- Long-term verifiability
+- Backward compatibility v1.x
+
+Status:
+- RELEASED
+- AUDIT-READY

@@ -1,43 +1,18 @@
-# Security Policy
+# Security Policy — Immuva Proof
 
-## Reporting vulnerabilities
+## Scope
+This repository implements the Immuva Proof verifier and protocol.
 
-If you discover a security vulnerability in Immuva Proof, please report it responsibly.
+## Guarantees
+- No false VALID verdict
+- Deterministic verification
+- Offline verifiability
+- No trusted third party
 
-Contact:
-security@immuva.com
+## Reporting
+If you discover a security issue:
+- Do NOT open a public issue
+- Contact: security@immuva.io
 
-Do not open public issues for security-sensitive matters.
-
----
-
-## Threat model
-
-Immuva Proof is designed to mitigate:
-- post-hoc log tampering
-- denial of responsibility for autonomous actions
-- unverifiable AI decisions
-- absence of cryptographic audit trails
-
-It is not designed to:
-- prevent incorrect decisions
-- enforce agent behavior
-- detect omitted actions
-
----
-
-## Cryptographic assumptions
-
-- Ed25519 signatures
-- SHA-256 hashing
-- Deterministic bundle construction
-- Offline-verifiable proofs
-
-Security relies on correct key management by integrators.
-
----
-
-## Revocation
-
-Compromised signing keys can be revoked via certified revocation lists (CRL).
-Revoked keys invalidate future proofs signed with that identity.
+## Supported versions
+- v1.x (current)
