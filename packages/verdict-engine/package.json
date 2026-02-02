@@ -1,0 +1,8 @@
+{
+  "name": "@immuva/verdict-engine",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "immuva verdict-engine"
+}
