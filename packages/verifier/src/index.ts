@@ -1,4 +1,4 @@
-import { sha256HexUtf8 } from "../../canonical/dist/index.js";
+import { sha256HexUtf8, canonicalizeJson } from "../../canonical/dist/index.js";
 
 type JSONValue =
   | null
@@ -121,9 +121,19 @@ function computeStatus(input: StubInput): VerdictStatus {
     if (input.key_binding.public_key !== input.signing.public_key) return "INVALID";
   }
 
-  // 6) non-equivocation: more than 1 distinct canonical event
+  // 6) non-equivocation: >1 distinct canonical event (canonicalized)
   if (input.canonical_events && input.canonical_events.length > 0) {
-    const uniq = new Set(input.canonical_events);
+    const normalized: string[] = [];
+    for (const s of input.canonical_events) {
+      try {
+        const obj = JSON.parse(s);
+        normalized.push(canonicalizeJson(obj).canonical);
+      } catch {
+        // unparsable or non-canonicalizable => structural violation
+        return "INVALID";
+      }
+    }
+    const uniq = new Set(normalized);
     if (uniq.size > 1) return "INVALID";
   }
 
