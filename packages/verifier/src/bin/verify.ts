@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { verifyStub, StubInput } from "../index";
+import { verifyStub } from "@immuva/verifier";
+import type { StubInput } from "@immuva/protocol";
 
 function normalizeVerdictForPrint(v: any) {
   // Ordre voulu par les vectors (JSON compare texte)

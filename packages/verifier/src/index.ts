@@ -111,36 +111,54 @@ function receiptRank(kind: string): number | null {
  * 8) OUTCOME_BASIS_CONFLICT => CONTESTED
  * 9) EVIDENCE_EVAL => VALID / AWAITING_EVIDENCE / NON_CLOSABLE
  */
-function computeStatus(input: StubInput): { status: VerdictStatus; violations: ViolationCode[] } {
+function computeStatus(
+  input: StubInput
+): { status: VerdictStatus; violations: ViolationCode[] } {
   const violations: ViolationCode[] = [];
   const ret = (status: VerdictStatus) => ({ status, violations });
+
+  const fail = (code: ViolationCode, status: VerdictStatus = "INVALID") => {
+    violations.push(code);
+    return ret(status);
+  };
+
   const receipts = input.receipts ?? [];
 
   // 1) receipt kind whitelist
   for (const r of receipts) {
-    if (!ALLOWED_RECEIPT_KINDS.has(r.kind)) return ret("INVALID");
+    if (!ALLOWED_RECEIPT_KINDS.has(r.kind)) {
+      return fail("RECEIPT_KIND_NOT_ALLOWED", "INVALID");
+    }
   }
 
   // 2) no receipt after NON_CLOSABLE
   const idxNC = receipts.findIndex((r) => r.kind === "NON_CLOSABLE");
-  if (idxNC >= 0 && idxNC < receipts.length - 1) return ret("INVALID");
+  if (idxNC >= 0 && idxNC < receipts.length - 1) {
+    return fail("RECEIPT_LATE_AFTER_NON_CLOSABLE", "INVALID");
+  }
 
   // 3) ENV_ATTEST cannot be outcome basis
-  if (input.outcome?.basis === "ENV_ATTEST") return ret("INVALID");
+  if (input.outcome?.basis === "ENV_ATTEST") {
+    return fail("OUTCOME_BASIS_NOT_ALLOWED", "INVALID");
+  }
 
-  // 4) signature model v1 (pragmatic): signature == sha256(canonical_event utf8) hex
+  // 4) signature check
   if (input.signing) {
     const canonical = input.canonical_event ?? "";
     const want = sha256HexUtf8(canonical);
-    if (input.signing.signature !== want) return ret("INVALID");
+    if (input.signing.signature !== want) {
+      return fail("SIGNATURE_INVALID", "INVALID");
+    }
   }
 
-  // 5) key binding must match signing
+  // 5) key binding
   if (input.key_binding && input.signing) {
-    if (input.key_binding.public_key !== input.signing.public_key) return ret("INVALID");
+    if (input.key_binding.public_key !== input.signing.public_key) {
+      return fail("KEY_BINDING_MISMATCH", "INVALID");
+    }
   }
 
-  // 6) non-equivocation: >1 distinct canonical event (canonicalized)
+  // 6) non-equivocation
   if (input.canonical_events && input.canonical_events.length > 0) {
     const normalized: string[] = [];
     for (const s of input.canonical_events) {
@@ -148,48 +166,58 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
         const obj = JSON.parse(s);
         normalized.push(canonicalizeJson(obj).canonical);
       } catch {
-        // unparsable or non-canonicalizable => structural violation
-        return ret("INVALID");
+        return fail("NON_EQUIVOCATION_VIOLATION", "INVALID");
       }
     }
-    const uniq = new Set(normalized);
-    if (uniq.size > 1) return ret("INVALID");
+    if (new Set(normalized).size > 1) {
+      return fail("NON_EQUIVOCATION_VIOLATION", "INVALID");
+    }
   }
 
-  // 7) ResultSet gate (async-first):
-  // - if no resultset and no terminal => PENDING
-  // - if no resultset but terminal signal present => INVALID
+  // 7) ResultSet gate
   const hasResultset = input.resultset_present === true;
   if (!hasResultset) {
-    const terminal =
+    const attemptingToConclude =
       input.terminal_present === true ||
-      input.outcome !== undefined; // outcome present implies "trying to conclude"
-    return ret(terminal ? "INVALID" : "PENDING");
+      input.outcome !== undefined;
+
+    if (attemptingToConclude) {
+      return fail("RESULTSET_MISSING", "INVALID");
+    }
+
+    return ret("PENDING");
   }
 
-  // From here: resultset present => we can evaluate
+  // 8) Evidence required
   const ev = input.evidence;
-  if (!ev) return ret("INVALID");
+  if (!ev) {
+    return fail("EVIDENCE_MISSING", "INVALID");
+  }
 
-  // 8) conflict between claimed basis and effective evidence => CONTESTED
-  if (input.outcome && input.outcome.basis !== ev.effective) return ret("CONTESTED");
+  // 9) Basis conflict
+  if (input.outcome && input.outcome.basis !== ev.effective) {
+    return fail("OUTCOME_BASIS_CONFLICT", "CONTESTED");
+  }
 
-  // 9) evidence evaluation with degradation
+  // 10) Evidence evaluation
   const eff = receiptRank(ev.effective);
   const req = receiptRank(ev.required);
-  if (eff === null || req === null) return ret("INVALID");
+  if (eff === null || req === null) {
+    return fail("EVIDENCE_REQUIRED_NOT_MET", "INVALID");
+  }
 
-  const nonClosableSignal = receipts.some((r) => r.kind === "NON_CLOSABLE");
+  const nonClosable = receipts.some((r) => r.kind === "NON_CLOSABLE");
 
-  // If not qualified, we degrade (do NOT hard-fail by default)
   if (!ev.qualified) {
-    return ret(nonClosableSignal ? "NON_CLOSABLE" : "AWAITING_EVIDENCE");
+    violations.push("EVIDENCE_NOT_QUALIFIED");
+    return ret(nonClosable ? "NON_CLOSABLE" : "AWAITING_EVIDENCE");
   }
 
   if (eff >= req) return ret("VALID");
-  return ret(nonClosableSignal ? "NON_CLOSABLE" : "AWAITING_EVIDENCE");
-}
 
+  violations.push("EVIDENCE_REQUIRED_NOT_MET");
+  return ret(nonClosable ? "NON_CLOSABLE" : "AWAITING_EVIDENCE");
+}
 export function verifyStub(input: StubInput, offline: boolean = false): Verdict {
   const { status } = computeStatus(input);
 

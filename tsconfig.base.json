@@ -8,6 +8,19 @@
     "declaration": true,
     "outDir": "dist",
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@immuva/*": ["packages/*/src/index.ts"],
+      "@immuva/canonical": ["packages/canonical/src/index.ts"],
+      "@immuva/protocol": ["packages/protocol/src/index.ts"],
+      "@immuva/receipts": ["packages/receipts/src/index.ts"],
+      "@immuva/identity": ["packages/identity/src/index.ts"],
+      "@immuva/evidence": ["packages/evidence/src/index.ts"],
+      "@immuva/non-equivocation": ["packages/non-equivocation/src/index.ts"],
+      "@immuva/fsm": ["packages/fsm/src/index.ts"],
+      "@immuva/verifier": ["packages/verifier/src/index.ts"]
+    }
   }
 }
