@@ -14,22 +14,16 @@
       "path": "../protocol"
     },
     {
+      "path": "../verdict-engine"
+    },
+    {
       "path": "../receipts"
     },
     {
       "path": "../identity"
     },
     {
-      "path": "../evidence"
-    },
-    {
       "path": "../non-equivocation"
-    },
-    {
-      "path": "../fsm"
-    },
-    {
-      "path": "../canonical"
     }
   ]
 }
