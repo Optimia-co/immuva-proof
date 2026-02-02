@@ -1,29 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "composite": true,
     "rootDir": "src",
     "outDir": "dist",
-    "composite": true,
-    "declaration": true
+    "declaration": true,
+    "declarationMap": true
   },
-  "include": [
-    "src"
-  ],
   "references": [
-    {
-      "path": "../protocol"
-    },
-    {
-      "path": "../verdict-engine"
-    },
-    {
-      "path": "../receipts"
-    },
-    {
-      "path": "../identity"
-    },
-    {
-      "path": "../non-equivocation"
-    }
-  ]
+    { "path": "../protocol" },
+    { "path": "../receipts" },
+    { "path": "../identity" },
+    { "path": "../non-equivocation" },
+    { "path": "../verdict-engine" }
+  ],
+  "include": ["src/**/*.ts"]
 }

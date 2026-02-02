@@ -1,4 +1,4 @@
-import { sha256HexUtf8 } from "../../canonical/dist/index.js";
+import { sha256HexUtf8 } from "@immuva/canonical";
 import { StubInput } from "@immuva/protocol";
 
 export function validateSignatureModelV1(input: StubInput): boolean {

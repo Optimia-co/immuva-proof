@@ -4,5 +4,9 @@
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "description": "immuva identity"
+  "description": "immuva identity",
+  "dependencies": {
+    "@immuva/canonical": "workspace:*",
+    "@immuva/protocol": "workspace:*"
+  }
 }

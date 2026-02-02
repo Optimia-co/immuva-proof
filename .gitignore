@@ -137,3 +137,13 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# build artifacts must not live in src/
+packages/*/src/**/*.js
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.js.map
+
+# build output
+packages/*/dist/
+packages/*/tsconfig.tsbuildinfo
+tsconfig.tsbuildinfo

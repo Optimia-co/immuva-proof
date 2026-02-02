@@ -1,4 +1,4 @@
-import { canonicalizeJson } from "../../canonical/dist/index.js";
+import { canonicalizeJson } from "@immuva/canonical";
 
 export function normalizeCanonicalEvents(canonical_events?: string[]): string[] | null {
   if (!canonical_events || canonical_events.length === 0) return [];
