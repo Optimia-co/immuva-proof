@@ -2,6 +2,8 @@ import { sha256HexUtf8, canonicalizeJson } from "../../canonical/dist/index.js";
 import { createHash } from "node:crypto";
 import { verifyEd25519Signature } from "./crypto/ed25519.js";
 import { CRYPTO_SUITES } from "./crypto/suites.js";
+import { uniqAndSortViolations } from "./policy-violations.js";
+import { rank } from "./proof-levels.js";
 
 
 type ViolationCode =
@@ -27,6 +29,15 @@ type JSONValue =
   | string
   | JSONValue[]
   | { [k: string]: JSONValue };
+
+export type VerifyContext = {
+  proof_levels?: boolean;
+  min_proof_level?: string;
+  require_key_bound?: boolean;
+  require_time_anchor?: boolean;
+  require_transparency_log?: boolean;
+};
+
 
 export type StubEvidence = {
   effective: string; // ex: "R1"
@@ -60,14 +71,13 @@ export type StubKeyBinding = {
 };
 
 export type StubInput = {
-  // T-min gate: "present" explicit, absent/false means "no resultset yet"
+  // T-min gate
   resultset_present?: boolean;
 
   evidence?: StubEvidence;
   outcome?: StubOutcome;
   pointers?: StubPointers;
 
-  // optional extensions for next vectors
   receipts?: StubReceipt[];
 
   canonical_event?: string;
@@ -76,8 +86,10 @@ export type StubInput = {
   signing?: StubSigning;
   key_binding?: StubKeyBinding;
 
-  // optional hint to simulate "finish/terminal" at verdict layer
-  // (useful when events are not part of this driver input)
+  // Policy / proof extensions (opt-in)
+  time_anchor?: any;
+  transparency_log?: any;
+
   terminal_present?: boolean;
 };
 
@@ -95,6 +107,10 @@ export type Verdict = {
   outcome?: StubOutcome;
   pointers?: StubPointers;
   mode?: "offline";
+
+  // policy extensions (optional)
+  proof_level?: string;
+  violations?: { code: string }[];
 };
 
 const ALLOWED_RECEIPT_KINDS = new Set(["R1", "R2", "ENV_ATTEST", "NON_CLOSABLE"]);
@@ -238,7 +254,14 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
   return ret(nonClosableSignal ? "NON_CLOSABLE" : "AWAITING_EVIDENCE");
 }
 
-export function verifyStub(input: StubInput, offline: boolean = false): Verdict {
+const computeProofLevel = (input: StubInput) => {
+  if (input.transparency_log) return "TRANSPARENCY_LOGGED";
+  if (input.time_anchor) return "TIME_ANCHORED";
+  if (input.key_binding) return "KEY_BOUND";
+  return "BASIC";
+};
+
+export function verifyStub(input: StubInput, offline: boolean = false, ctx?: VerifyContext): Verdict {
   const { status } = computeStatus(input);
 
   // Keep deterministic field insertion order:
@@ -251,7 +274,51 @@ export function verifyStub(input: StubInput, offline: boolean = false): Verdict 
   };
 
   if (offline) verdict.mode = "offline";
+  
+  // Policy composition (normative)
+  if (verdict.status === "VALID" && ctx) {
+
+    // Compute proof level ONLY if needed
+    const needsPL = !!(ctx.proof_levels || ctx.min_proof_level);
+    const gotPL = needsPL ? computeProofLevel(input) : undefined;
+
+    // Attach proof_level ONLY if requested
+    if (ctx.proof_levels && gotPL) {
+      verdict.proof_level = gotPL;
+    }
+
+    // A9.2 — min_proof_level OVERRIDES all require_* checks
+    if (ctx.min_proof_level && gotPL) {
+      if (rank(gotPL as any) < rank(ctx.min_proof_level as any)) {
+        return {
+          status: "INVALID",
+          violations: uniqAndSortViolations([{ code: "MIN_PROOF_LEVEL_NOT_MET" }])
+        } as any;
+      }
+    }
+
+    // require_* constraints (ONLY if min_proof_level passed)
+    const vios: { code: string }[] = [];
+
+    if (ctx.require_key_bound && !input.key_binding) {
+      vios.push({ code: "KEY_BINDING_REQUIRED" });
+    }
+
+    if (ctx.require_time_anchor && !input.time_anchor) {
+      vios.push({ code: "TIME_ANCHOR_REQUIRED" });
+    }
+
+    if (ctx.require_transparency_log && !input.transparency_log) {
+      vios.push({ code: "TRANSPARENCY_LOG_REQUIRED" });
+    }
+
+    if (vios.length > 0) {
+      return { status: "INVALID", violations: uniqAndSortViolations(vios) } as any;
+    }
+  }
+
   return verdict;
+
 }
 
 import { loadViolationRegistry } from "./registry/violations";
