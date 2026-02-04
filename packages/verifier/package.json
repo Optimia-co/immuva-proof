@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@immuva/canonical": "workspace:*",
     "@immuva/identity": "workspace:*",
     "@immuva/non-equivocation": "workspace:*",
     "@immuva/protocol": "workspace:*",

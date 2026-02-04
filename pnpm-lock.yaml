@@ -66,6 +66,9 @@ importers:
 
   packages/verifier:
     dependencies:
+      '@immuva/canonical':
+        specifier: workspace:*
+        version: link:../canonical
       '@immuva/identity':
         specifier: workspace:*
         version: link:../identity
