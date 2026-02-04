@@ -3,5 +3,11 @@
   "version": "1.0.0",
   "type": "commonjs",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "bin": {
+    "immuva-fsm": "dist/bin/fsm.js"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  }
 }

@@ -1,146 +1,126 @@
 #!/usr/bin/env node
-import { readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
 
-type AnyObj = Record<string, any>;
+/**
+ * Immuva FSM CLI (v1)
+ * Input  : JSONL (stdin) OR file path
+ * Output : JSON (stdout)
+ */
+
+import fs from "node:fs";
 
 type Violation = {
-  code: "FSM_INVALID_ORDER" | "FSM_DOUBLE_FINISH" | "FSM_CROSS_ACTION_ID";
+  code: string;
   message: string;
-  event_id: string;
+  event_id?: string;
 };
 
-function isDir(p: string): boolean {
-  try { return statSync(p).isDirectory(); } catch { return false; }
-}
+function readEvents(): any[] {
+  const file = process.argv[2];
 
-function readAllInputs(argPath: string): AnyObj[] {
-  const inputs: AnyObj[] = [];
-
-  // If a case directory is provided, prefer "<case>/input"
-  const base = isDir(argPath) ? argPath : null;
-  const inputDir = base && isDir(join(base, "input")) ? join(base, "input") : null;
-
-  if (inputDir) {
-    const files = readdirSync(inputDir).map((f) => join(inputDir, f));
-    for (const fp of files) {
-      if (isDir(fp)) continue;
-      inputs.push(...parseFile(fp));
-    }
-    return inputs;
+  let raw = "";
+  if (file) {
+    raw = fs.readFileSync(file, "utf8");
+  } else {
+    raw = fs.readFileSync(0, "utf8");
   }
 
-  // Otherwise treat argPath as a file path
-  return parseFile(argPath);
-}
-
-function parseFile(fp: string): AnyObj[] {
-  const raw = readFileSync(fp, "utf8").trim();
-  if (!raw) return [];
-
-  // Try JSON first
-  try {
-    const v = JSON.parse(raw);
-    return Array.isArray(v) ? v : [v];
-  } catch {
-    // Fallback: JSONL/NDJSON (one json per line)
-    const out: AnyObj[] = [];
-    for (const line of raw.split(/\r?\n/)) {
-      const t = line.trim();
-      if (!t) continue;
-      out.push(JSON.parse(t));
-    }
-    return out;
+  if (!raw.trim()) {
+    throw new Error("FSM_NO_INPUT");
   }
+
+  return raw
+    .trim()
+    .split(/\r?\n/)
+    .map((l) => JSON.parse(l));
 }
 
-function getEventId(e: AnyObj): string {
-  return String(e.event_id ?? e.id ?? e.evt_id ?? e.eventId ?? "");
+function output(obj: any) {
+  process.stdout.write(JSON.stringify(obj, null, 2));
 }
 
-function getActionId(e: AnyObj): string {
-  return String(e.action_id ?? e.actionId ?? "");
-}
+try {
+  const events = readEvents();
 
-function getType(e: AnyObj): string {
-  const t = String(e.type ?? e.kind ?? e.event_type ?? e.name ?? "");
-  return t;
-}
-
-// very small heuristic: look for "start"/"finish" substrings (covers START, start, action.start, etc.)
-function isStart(t: string): boolean {
-  const s = t.toLowerCase();
-  return s.includes("start") || s.includes("begin");
-}
-function isFinish(t: string): boolean {
-  const s = t.toLowerCase();
-  return s.includes("finish") || s.includes("end");
-}
-
-function runFsm(events: AnyObj[]): { action_id: string; violations: Violation[] } {
-  const violations: Violation[] = [];
-
-  let firstAction: string | null = null;
+  let firstActionId: string | null = null;
   let seenStart = false;
-  let seenFinish = false;
+  let finished = false;
 
-  for (const e of events) {
-    const action = getActionId(e);
-    const eid = getEventId(e);
-    const typ = getType(e);
-
-    if (!firstAction && action) firstAction = action;
-
-    // CROSS_ACTION_ID: any event with a different action_id than the first
-    if (firstAction && action && action !== firstAction) {
-      violations.push({
-        code: "FSM_CROSS_ACTION_ID",
-        message: "multiple action_id values observed",
-        event_id: eid || "(unknown)"
+  for (const ev of events) {
+    if (!ev.action_id) {
+      output({
+        action_id: null,
+        violations: [{ code: "FSM_EVENT_MISSING_ACTION_ID" }],
       });
-      // deterministic: stop at first violation
-      return { action_id: firstAction, violations };
+      process.exit(0);
     }
 
-    // INVALID_ORDER: finish before start
-    if (isFinish(typ) && !seenStart) {
-      violations.push({
-        code: "FSM_INVALID_ORDER",
-        message: "finish observed before start",
-        event_id: eid || "(unknown)"
+    if (!firstActionId) {
+      firstActionId = ev.action_id;
+    } else if (ev.action_id !== firstActionId) {
+      output({
+        action_id: firstActionId,
+        violations: [
+          {
+            code: "FSM_CROSS_ACTION_ID",
+            message: "multiple action_id values observed",
+            event_id: ev.event_id,
+          },
+        ],
       });
-      return { action_id: firstAction ?? action ?? "", violations };
+      process.exit(0);
     }
 
-    if (isStart(typ)) seenStart = true;
+    if (ev.kind?.endsWith(".start")) {
+      seenStart = true;
+    }
 
-    // DOUBLE_FINISH: more than one finish event
-    if (isFinish(typ)) {
-      if (seenFinish) {
-        violations.push({
-          code: "FSM_DOUBLE_FINISH",
-          message: "multiple finish events observed",
-          event_id: eid || "(unknown)"
+    if (ev.kind?.endsWith(".finish")) {
+      if (!seenStart) {
+        output({
+          action_id: firstActionId,
+          violations: [
+            {
+              code: "FSM_INVALID_ORDER",
+              message: "finish observed before start",
+              event_id: ev.event_id,
+            },
+          ],
         });
-        return { action_id: firstAction ?? action ?? "", violations };
+        process.exit(0);
       }
-      seenFinish = true;
+
+      if (finished) {
+        output({
+          action_id: firstActionId,
+          violations: [
+            {
+              code: "FSM_DOUBLE_FINISH",
+              message: "multiple finish events observed",
+              event_id: ev.event_id,
+            },
+          ],
+        });
+        process.exit(0);
+      }
+
+      finished = true;
     }
   }
 
-  return { action_id: firstAction ?? "", violations };
-}
-
-const arg = process.argv[2];
-
-if (!arg || arg === "--help" || arg === "-h") {
-  console.log("Usage: fsm <case_dir_or_file>");
+  output({
+    action_id: firstActionId,
+    violations: [],
+  });
+  process.exit(0);
+} catch (err: any) {
+  output({
+    action_id: null,
+    violations: [
+      {
+        code: "FSM_INTERNAL_ERROR",
+        message: err?.message ?? String(err),
+      },
+    ],
+  });
   process.exit(0);
 }
-
-const events = readAllInputs(arg);
-const out = runFsm(events);
-
-// Must be deterministic and non-failing: print JSON and exit 0
-process.stdout.write(JSON.stringify(out, null, 2) + "\n");
-process.exit(0);
