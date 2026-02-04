@@ -4,6 +4,9 @@
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
   "dependencies": {
     "@immuva/canonical": "workspace:*",
     "@immuva/identity": "workspace:*",
@@ -15,3 +18,4 @@
     "@noble/hashes": "^2.0.1"
   }
 }
+

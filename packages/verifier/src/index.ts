@@ -193,7 +193,14 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
     }
   }
 
-  // 5) key binding & key_id validation (key_status optional)
+  // 5) key binding (v1 + v2)
+  if (input.signing && input.key_binding) {
+    if (input.signing.public_key !== input.key_binding.public_key) {
+      return ret("INVALID");
+    }
+  }
+
+  // 5b) v2-only key lifecycle rules
   if (input.signing?.crypto_suite === "IMMUVAv2-ED25519-SHA256") {
     const pub = input.signing.public_key;
     if (!pub) return ret("INVALID");
@@ -201,16 +208,12 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
     const kb = input.key_binding;
     if (!kb) return ret("INVALID");
 
-    if (kb.public_key !== pub) return ret("INVALID");
-
     if (!kb.key_id) return ret("INVALID");
     const { sha256: want } = canonicalizeJson(input.canonical_event);
     if (kb.key_id !== want) return ret("INVALID");
 
-    // key_status is OPTIONAL (opt-in lifecycle)
     if (kb.key_status === "REVOKED") return ret("INVALID");
   }
-
 
 
 
