@@ -36,6 +36,16 @@ export type VerifyContext = {
   require_key_bound?: boolean;
   require_time_anchor?: boolean;
   require_transparency_log?: boolean;
+
+  // Signed policy enforcement (A15+)
+  policy?: VerifiedPolicy;
+};
+
+// Opaque verified policy (validated upstream)
+export type VerifiedPolicy = {
+  readonly policy_id?: string;
+  readonly signature?: string;
+  readonly trust_root?: string;
 };
 
 
