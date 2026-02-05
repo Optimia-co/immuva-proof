@@ -1,21 +1,23 @@
 {
   "name": "@immuva/verifier",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -b"
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   },
   "dependencies": {
     "@immuva/canonical": "workspace:*",
-    "@immuva/identity": "workspace:*",
-    "@immuva/non-equivocation": "workspace:*",
     "@immuva/protocol": "workspace:*",
-    "@immuva/receipts": "workspace:*",
-    "@immuva/verdict-engine": "workspace:*",
-    "@noble/ed25519": "^3.0.0",
-    "@noble/hashes": "^2.0.1"
+    "@noble/ed25519": "^3.0.0"
+  },
+  "scripts": {
+    "build": "tsc -b"
   }
 }
-

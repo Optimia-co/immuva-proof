@@ -1,2 +1,9 @@
 packages:
-  - "packages/*"
+  - "packages/canonical"
+  - "packages/protocol"
+  - "packages/verifier"
+  - "packages/fsm"
+  - "packages/registries"
+  - "packages/conformance-runner"
+  - "packages/api"
+  # SDK volontairement hors workspace

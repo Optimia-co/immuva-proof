@@ -1,77 +1,76 @@
-import { canonicalizeJson, sha256HexUtf8 } from "@immuva/canonical";
+import "./crypto-init.js";
 
-import type {
-  StubInput,
-  Verdict,
-  StubSigning,
-  StubKeyBinding
-} from "@immuva/protocol";
-
+import { canonicalizeJson, sha256HexUtf8 } from "../../canonical/dist/index.js";
+import type { StubInput, Verdict } from "../../protocol/dist/index.js";
 import * as ed25519 from "@noble/ed25519";
 
-/**
- * Runtime loader (CommonJS verifier)
- */
-async function loadVerifier(): Promise<
-  (proof: StubInput, offline: boolean, ctx?: any) => Verdict
-> {
-  const mod: any = await import("@immuva/verifier");
-  return (
-    mod.verifyWithDetails ??
-    mod.default?.verifyWithDetails ??
-    mod.default ??
-    mod
-  );
+/* ============================
+ * Runtime verifier loader
+ * ============================ */
+type VerifyWithDetailsFn =
+  (input: any, offline?: boolean, ctx?: any) => any;
+
+async function loadVerifier(): Promise<VerifyWithDetailsFn> {
+  // runtime import (verifier built first)
+  const mod: any = await import("../../verifier/dist/index.js");
+  return mod.verifyWithDetails;
 }
 
 /* ============================
- * PROVE — V2 ONLY
+ * PROVE — V2 (REAL SIGNATURE)
+ * - forwards extra fields
+ * - signs sha256(canonical_event)
  * ============================ */
-export async function prove(params: {
-  event: unknown;
-  public_key_hex: string;
-  private_key_hex: string;
-}): Promise<StubInput> {
-  const { canonical } = canonicalizeJson(params.event);
+export async function prove(params: any): Promise<any> {
+  const {
+    event,
+    private_key_hex,
+    public_key_hex,
+    ...rest
+  } = params;
 
+  const { canonical } = canonicalizeJson(event);
+
+  // verifier expects Ed25519 over sha256(canonical_event)
   const msgHash = Buffer.from(sha256HexUtf8(canonical), "hex");
   const sig = await ed25519.sign(
     msgHash,
-    Buffer.from(params.private_key_hex, "hex")
+    Buffer.from(private_key_hex, "hex")
   );
 
-  const signing: StubSigning = {
-    crypto_suite: "IMMUVAv2-ED25519-SHA256",
-    signature: Buffer.from(sig).toString("hex"),
-    public_key: params.public_key_hex
-  };
-
-  const key_binding: StubKeyBinding = {
-    public_key: params.public_key_hex,
-      };
-
   return {
+    ...rest,
     canonical_event: canonical,
-    signing,
-    key_binding
+    signing: {
+      crypto_suite: "IMMUVAv2-ED25519-SHA256",
+      signature: Buffer.from(sig).toString("hex"),
+      public_key: public_key_hex
+    },
+    key_binding: {
+      public_key: public_key_hex,
+      key_id: sha256HexUtf8(canonical),
+      key_status: "ACTIVE"
+    }
   };
 }
 
 /* ============================
- * VERIFY — V2 ONLY
+ * VERIFY — V2
  * ============================ */
-export async function verify(
-  proof: StubInput,
-  opts?: { offline?: boolean }
-): Promise<Verdict> {
+export async function verify(proof: any, opts?: any): Promise<any> {
+
   const offline = opts?.offline ?? true;
 
   if (
     !proof.signing ||
     proof.signing.crypto_suite !== "IMMUVAv2-ED25519-SHA256" ||
-    !proof.signing.public_key
+    !proof.signing.public_key ||
+    !proof.signing.signature
   ) {
-    return { status: "INVALID", violations: ["SIGNATURE_INVALID"] };
+    return {
+      status: "INVALID",
+      violations: ["SIGNATURE_INVALID"]
+    };
   }
 
   const verifyWithDetails = await loadVerifier();
@@ -84,3 +83,5 @@ export async function verify(
 export function proofId(proof: StubInput): string {
   return sha256HexUtf8(proof.canonical_event ?? "");
 }
+
+export { keygen } from "./keygen.js";

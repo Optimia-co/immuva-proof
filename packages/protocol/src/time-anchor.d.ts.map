@@ -1,0 +1,1 @@
+{"version":3,"file":"time-anchor.d.ts","sourceRoot":"","sources":["time-anchor.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,cAAc,GACtB,SAAS,GACT,YAAY,GACZ,kBAAkB,CAAC;AAEvB,MAAM,MAAM,UAAU,GAAG;IACvB,IAAI,EAAE,cAAc,CAAC;IACrB,SAAS,EAAE,MAAM,CAAC;IAClB,WAAW,EAAE,MAAM,CAAC;IACpB,YAAY,EAAE,MAAM,CAAC;IACrB,KAAK,CAAC,EAAE,MAAM,CAAC;CAChB,CAAC"}
