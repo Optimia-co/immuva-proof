@@ -147,3 +147,7 @@ packages/*/src/**/*.js.map
 packages/*/dist/
 packages/*/tsconfig.tsbuildinfo
 tsconfig.tsbuildinfo
+# Immuva local keys
+*.key
+*.pub
+immuva-key.*
