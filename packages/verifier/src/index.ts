@@ -1,3 +1,5 @@
+import { fsRegistryProvider } from "./registry/provider";
+import type { RegistryProvider } from "./registry/provider";
 import { sha256HexUtf8, canonicalizeJson } from "../../canonical/dist/index.js";
 import { createHash } from "node:crypto";
 import { verifyEd25519Signature } from "./crypto/ed25519.js";
@@ -7,6 +9,11 @@ import { rank } from "./proof-levels.js";
 
 
 type ViolationCode =
+  | "KEY_ID_REQUIRED"
+  | "KEY_ID_MISMATCH"
+  | "KEY_REVOKED"
+
+  | "REGISTRY_UNAVAILABLE"
   | "RECEIPT_KIND_NOT_ALLOWED"
   | "RECEIPT_LATE_AFTER_NON_CLOSABLE"
   | "OUTCOME_BASIS_NOT_ALLOWED"
@@ -39,6 +46,10 @@ export type VerifyContext = {
 
   // Signed policy enforcement (A15+)
   policy?: VerifiedPolicy;
+
+  // Registry resolution (SDK/API)
+  registry_provider?: RegistryProvider;
+  spec_root?: string;
 };
 
 // Opaque verified policy (validated upstream)
@@ -120,7 +131,7 @@ export type Verdict = {
 
   // policy extensions (optional)
   proof_level?: string;
-  violations?: { code: string }[];
+  violations?: ViolationCode[];
 };
 
 const ALLOWED_RECEIPT_KINDS = new Set(["R1", "R2", "ENV_ATTEST", "NON_CLOSABLE"]);
@@ -209,7 +220,7 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
     if (!kb) return ret("INVALID");
 
     if (!kb.key_id) return ret("INVALID");
-    const { sha256: want } = canonicalizeJson(input.canonical_event);
+    const want = sha256HexUtf8(input.canonical_event ?? "");
     if (kb.key_id !== want) return ret("INVALID");
 
     if (kb.key_status === "REVOKED") return ret("INVALID");
@@ -336,7 +347,7 @@ export function verifyStub(input: StubInput, offline: boolean = false, ctx?: Ver
 
 import { loadViolationRegistry } from "./registry/violations";
 
-export type VerdictWithDetails = Verdict & {
+export type VerdictWithDetails = Omit<Verdict, "violations"> & {
   violations: {
     code: ViolationCode;
     severity: string;
@@ -345,10 +356,28 @@ export type VerdictWithDetails = Verdict & {
 
 export function verifyWithDetails(
   input: StubInput,
-  offline: boolean = false
+  offline: boolean = false,
+  ctx?: VerifyContext
 ): VerdictWithDetails {
   const { status, violations } = computeStatus(input);
-  const reg = loadViolationRegistry();
+  const provider =
+  (ctx && ctx.registry_provider)
+    ? ctx.registry_provider
+    : (ctx && ctx.spec_root)
+      ? fsRegistryProvider(ctx.spec_root)
+      : process.env.IMMUVA_SPEC_ROOT
+        ? fsRegistryProvider(process.env.IMMUVA_SPEC_ROOT)
+        : null;
+
+if (!provider) {
+  return {
+    status: "INVALID",
+    mode: offline ? "offline" : undefined,
+    violations: [{ code: "REGISTRY_UNAVAILABLE", severity: "invalid" }]
+  };
+}
+
+const reg = loadViolationRegistry(provider);
 
   return {
     status,
@@ -438,7 +467,7 @@ export function verifyExplained(
   offline: boolean = false
 ): VerdictWithDetails & { explanation: VerdictExplanation } {
   return {
-    ...verifyWithDetails(input, offline),
+    ...verifyWithDetails(input, offline, undefined),
     explanation: explainVerdict(input)
   };
 }
