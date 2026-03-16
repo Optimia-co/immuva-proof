@@ -6,4 +6,7 @@ packages:
   - "packages/registries"
   - "packages/conformance-runner"
   - "packages/api"
-  # SDK volontairement hors workspace
+  - "examples"
+  # SDK dans workspace
+  - "packages/sdk"
+# 

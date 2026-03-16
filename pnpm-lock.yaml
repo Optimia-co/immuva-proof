@@ -22,6 +22,12 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  examples:
+    dependencies:
+      '@immuva/sdk':
+        specifier: workspace:*
+        version: link:../packages/sdk
+
   packages/api:
     dependencies:
       fastify:
@@ -41,6 +47,21 @@ importers:
   packages/protocol: {}
 
   packages/registries: {}
+
+  packages/sdk:
+    dependencies:
+      '@immuva/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@immuva/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+      '@immuva/verifier':
+        specifier: workspace:*
+        version: link:../verifier
+      '@noble/ed25519':
+        specifier: ^3.0.0
+        version: 3.0.0
 
   packages/verifier:
     dependencies:
