@@ -1,0 +1,14 @@
+{
+  "name": "@immuva/cli",
+  "version": "1.0.0",
+  "bin": {
+    "immuva": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@immuva/verifier": "workspace:*",
+    "@noble/ed25519": "^3.0.0"
+  }
+}

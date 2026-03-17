@@ -36,6 +36,15 @@ importers:
 
   packages/canonical: {}
 
+  packages/cli:
+    dependencies:
+      '@immuva/verifier':
+        specifier: workspace:*
+        version: link:../verifier
+      '@noble/ed25519':
+        specifier: ^3.0.0
+        version: 3.0.0
+
   packages/conformance-runner:
     dependencies:
       fast-glob:

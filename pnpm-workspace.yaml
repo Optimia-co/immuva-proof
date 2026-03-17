@@ -9,4 +9,5 @@ packages:
   - "examples"
   # SDK dans workspace
   - "packages/sdk"
+  - "packages/cli"
 # 
