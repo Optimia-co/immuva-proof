@@ -1,6 +1,6 @@
 {
   "name": "@immuva/verifier",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,8 +13,8 @@
     }
   },
   "dependencies": {
-    "@immuva/canonical": "workspace:*",
-    "@immuva/protocol": "workspace:*",
+    "@immuva/canonical": "1.0.0",
+    "@immuva/protocol": "1.0.0",
     "@noble/ed25519": "^3.0.0"
   },
   "scripts": {
