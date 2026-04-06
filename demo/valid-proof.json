@@ -1,0 +1,23 @@
+{
+  "resultset_present": true,
+  "evidence": {
+    "effective": "R1",
+    "required": "R1",
+    "qualified": true
+  },
+  "outcome": {
+    "value": "approve",
+    "basis": "R1"
+  },
+  "canonical_event": "{\"amount\":4200,\"currency\":\"EUR\",\"decision\":\"approve\",\"kind\":\"PAYMENT_DECISION\",\"payment_id\":\"pay_demo_001\",\"reason\":\"risk_below_threshold\",\"risk_score\":0.12}",
+  "signing": {
+    "crypto_suite": "IMMUVAv2-ED25519-SHA256",
+    "signature": "651abe3d4547e5fdf1877f504d5f6c0678220d9e32cbb75c077a6533395349939db85cdf94994e281f3382acf1bc79f83a1cb195d3e34dc4e01e1087ac38a209",
+    "public_key": "060bba643de561f8ca93ffa374e3d159b11dded7506e143ef8e776852061bc7b"
+  },
+  "key_binding": {
+    "public_key": "060bba643de561f8ca93ffa374e3d159b11dded7506e143ef8e776852061bc7b",
+    "key_id": "bcf2c23d2b0a502ad794b4bbfd83eb132d63af96ce9b94fcee67da5e1464d639",
+    "key_status": "ACTIVE"
+  }
+}

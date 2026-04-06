@@ -12,7 +12,7 @@ This repository implements the Immuva Proof verifier and protocol.
 ## Reporting
 If you discover a security issue:
 - Do NOT open a public issue
-- Contact: security@immuva.io
+- Contact: security@immuva.com
 
 ## Supported versions
 - v1.x (current)

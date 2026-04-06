@@ -1,9 +1,9 @@
 # Immuva Proof v1.0.0 — Release Notes
 
 ## Status
-✔ Stable  
-✔ Normative  
-✔ Frozen  
+✔ Stable
+✔ Normative
+✔ Frozen
 
 ## Highlights
 - Deterministic verifier pipeline
@@ -15,9 +15,12 @@
 - Executable conformance vectors
 
 ## Conformance
-- core: PASS
-- tl: PASS
-- policies: PASS
+- core: 17/17 PASS
+- crypto-v2-ed25519: vectors defined, CI pending
+- policy-precedence: vectors defined, CI pending
+- violation-ordering: vectors defined, CI pending
+- tl: stub only
+- policies: stub only
 
 ## Compatibility
 - Backward compatible v1.x
@@ -28,4 +31,3 @@
 - Proof of autonomous actions
 - Long-term verification
 - Regulatory-grade evidence
-
