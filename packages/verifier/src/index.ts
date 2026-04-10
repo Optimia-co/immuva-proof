@@ -158,10 +158,15 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
   const violations: ViolationCode[] = [];
   const ret = (status: VerdictStatus) => ({ status, violations });
 
-  // 0) crypto suite validation (v1.1)
-  if (input.signing?.crypto_suite) {
-    const suite = input.signing.crypto_suite as keyof typeof CRYPTO_SUITES;
-    if (!(suite in CRYPTO_SUITES)) return ret("INVALID");
+  // 0) crypto suite whitelist (IMMUVAv1-SHA256 | IMMUVAv2-ED25519-SHA256)
+  //    Any suite name that is absent from CRYPTO_SUITES is rejected immediately —
+  //    no silent fallback to v1 is allowed.
+  if (input.signing) {
+    const suiteName = input.signing.crypto_suite;
+    if (!suiteName || !(suiteName in CRYPTO_SUITES)) {
+      return ret("INVALID");
+    }
+    const suite = suiteName as keyof typeof CRYPTO_SUITES;
     const rule = CRYPTO_SUITES[suite];
     if (rule.requires_public_key && !input.signing.public_key) {
       return ret("INVALID");
