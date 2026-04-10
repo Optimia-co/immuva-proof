@@ -9,13 +9,15 @@ WORKDIR /monorepo
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/canonical/package.json          packages/canonical/
 COPY packages/protocol/package.json           packages/protocol/
+COPY packages/receipts/package.json           packages/receipts/
+COPY packages/identity/package.json           packages/identity/
+COPY packages/non-equivocation/package.json   packages/non-equivocation/
+COPY packages/verdict-engine/package.json     packages/verdict-engine/
 COPY packages/verifier/package.json           packages/verifier/
 COPY packages/fsm/package.json                packages/fsm/
 COPY packages/evidence/package.json           packages/evidence/
 COPY packages/sdk/package.json                packages/sdk/
 COPY packages/api/package.json                packages/api/
-
-# Stub out other workspace packages so pnpm install resolves the graph
 COPY packages/cli/package.json                packages/cli/
 
 RUN pnpm install --no-frozen-lockfile --ignore-scripts
@@ -23,19 +25,26 @@ RUN pnpm install --no-frozen-lockfile --ignore-scripts
 # ── Copy sources ──────────────────────────────────────────────────────────────
 COPY tsconfig.json ./
 COPY tsconfig.base.json ./
-COPY packages/canonical/   packages/canonical/
-COPY packages/protocol/    packages/protocol/
-COPY packages/verifier/    packages/verifier/
-COPY packages/fsm/         packages/fsm/
-COPY packages/evidence/    packages/evidence/
-COPY packages/sdk/         packages/sdk/
-COPY packages/api/         packages/api/
-COPY spec/                 spec/
+COPY packages/canonical/        packages/canonical/
+COPY packages/protocol/         packages/protocol/
+COPY packages/receipts/         packages/receipts/
+COPY packages/identity/         packages/identity/
+COPY packages/non-equivocation/ packages/non-equivocation/
+COPY packages/verdict-engine/   packages/verdict-engine/
+COPY packages/verifier/         packages/verifier/
+COPY packages/fsm/              packages/fsm/
+COPY packages/evidence/         packages/evidence/
+COPY packages/sdk/              packages/sdk/
+COPY packages/api/              packages/api/
+COPY spec/                      spec/
 
-# ── Build ─────────────────────────────────────────────────────────────────────
-# Root tsc -b builds canonical, protocol, verifier, fsm, evidence (composite refs)
+# ── Build (dependency order) ──────────────────────────────────────────────────
 RUN pnpm --filter @immuva/canonical run build
 RUN pnpm --filter @immuva/protocol run build
+RUN pnpm --filter @immuva/receipts run build
+RUN pnpm --filter @immuva/identity run build
+RUN pnpm --filter @immuva/non-equivocation run build
+RUN pnpm --filter @immuva/verdict-engine run build
 RUN pnpm --filter @immuva/verifier run build
 RUN pnpm --filter @immuva/fsm run build
 RUN pnpm --filter @immuva/evidence run build
