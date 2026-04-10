@@ -1,0 +1,7 @@
+{
+  "params": {
+    "hash": "sha256",
+    "tree": "merkle",
+    "time_window": "unspecified"
+  }
+}

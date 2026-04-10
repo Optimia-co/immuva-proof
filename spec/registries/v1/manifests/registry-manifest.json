@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "crypto_suites.json",
+      "sha256": "8c31bb19222358b1342fd86f7e030d4003e5021ec87ca16e47dad0ad15abd2a6"
+    },
+    {
+      "path": "kinds.json",
+      "sha256": "5a0c1e4dc4cc2a67ef8e9c1c5850ffdcb01b9d56f1f7e9d52a97e4c156703425"
+    },
+    {
+      "path": "link_relations.json",
+      "sha256": "49acd85776f15025c1895dd35fb96f4bc174a8f31802d1ba3c2961bd97bf7a33"
+    },
+    {
+      "path": "policy_suites.json",
+      "sha256": "e1ee0c058ed5d26c587b83a24eb3dd293c774823a9aa126b30b2d4fa5f8de35c"
+    },
+    {
+      "path": "proxy_kinds.json",
+      "sha256": "5909fb234630fe2d8fd80a6f58470a76f84a6dcea48e0d55b6fee866de0caa32"
+    },
+    {
+      "path": "receipt_types.json",
+      "sha256": "8736beeab1da1459414848cd5fbf90ddf66d9674db69d59128477de7afded01e"
+    },
+    {
+      "path": "subject_ref_schema.json",
+      "sha256": "063161662e5d40105de9e4c765b80b47d07fb82ef5359f6de58b418d8897917b"
+    },
+    {
+      "path": "tl_params.json",
+      "sha256": "5d0fc872d9d0a91c4709caa444e34579e93444a2449166f6d3c516092c9f6b8a"
+    },
+    {
+      "path": "violation_codes.json",
+      "sha256": "db35bba400b47742587ad3252202583da605f9cdb8abbed357b3768e693a9805"
+    }
+  ]
+}

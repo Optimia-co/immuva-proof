@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "kind": "action.open",
+      "terminal": false,
+      "description": "Opens an action and initializes the FSM."
+    },
+    {
+      "kind": "action.event",
+      "terminal": false,
+      "description": "Intermediate event associated with an open action."
+    },
+    {
+      "kind": "action.finish",
+      "terminal": true,
+      "description": "Terminates an action successfully."
+    },
+    {
+      "kind": "action.invalid",
+      "terminal": true,
+      "description": "Terminates an action due to a structural violation."
+    }
+  ]
+}

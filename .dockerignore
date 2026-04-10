@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+**/node_modules
+
+# Build artifacts (rebuilt in Docker)
+**/dist
+**/*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local env files
+.env
+.env.*
+
+# Test files
+**/tests
+**/*.test.ts
+**/*.spec.ts
+
+# CI/CD
+.github
+
+# Other repos
+../immuva
+../immuva-proof-spec
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode
+.idea
+*.swp

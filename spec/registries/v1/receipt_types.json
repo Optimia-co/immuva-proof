@@ -1,0 +1,11 @@
+{
+  "registry": "receipt_types",
+  "registry_version": "1.0.0",
+  "spec_version": "v1.0.0",
+  "items": [
+    "RECEIPT",
+    "PROXY_RECEIPT",
+    "ENV_ATTEST",
+    "THIRD_PARTY_ATTEST"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "id": "sha256-utf8",
+      "hash": "sha256",
+      "encoding": "utf8",
+      "signature_model": "hash-equality"
+    }
+  ]
+}
