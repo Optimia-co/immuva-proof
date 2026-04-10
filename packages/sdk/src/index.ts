@@ -48,7 +48,7 @@ export async function prove(params: any): Promise<any> {
     },
     key_binding: {
       public_key: public_key_hex,
-      key_id: sha256HexUtf8(canonical),
+      key_id: sha256HexUtf8(public_key_hex),
       key_status: "ACTIVE"
     }
   };
