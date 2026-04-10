@@ -10,4 +10,12 @@ packages:
   # SDK dans workspace
   - "packages/sdk"
   - "packages/cli"
-# 
+  # Sub-packages (previously missing from workspace)
+  - "packages/identity"
+  - "packages/receipts"
+  - "packages/non-equivocation"
+  - "packages/verdict-engine"
+  - "packages/evidence"
+  - "packages/events"
+  - "packages/policy"
+

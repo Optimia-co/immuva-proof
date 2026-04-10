@@ -1,0 +1,7 @@
+{
+  "name": "@immuva/policy",
+  "version": "0.0.0",
+  "type": "commonjs",
+  "main": "src/index.ts",
+  "private": true
+}

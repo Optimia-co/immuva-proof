@@ -54,9 +54,35 @@ importers:
         specifier: ^3.3.2
         version: 3.3.3
 
+  packages/events: {}
+
+  packages/evidence: {}
+
   packages/fsm: {}
 
+  packages/identity:
+    dependencies:
+      '@immuva/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@immuva/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+
+  packages/non-equivocation:
+    dependencies:
+      '@immuva/canonical':
+        specifier: workspace:*
+        version: link:../canonical
+      '@immuva/protocol':
+        specifier: workspace:*
+        version: link:../protocol
+
+  packages/policy: {}
+
   packages/protocol: {}
+
+  packages/receipts: {}
 
   packages/registries: {}
 
@@ -74,6 +100,8 @@ importers:
       '@noble/ed25519':
         specifier: ^3.0.0
         version: 3.0.0
+
+  packages/verdict-engine: {}
 
   packages/verifier:
     dependencies:
