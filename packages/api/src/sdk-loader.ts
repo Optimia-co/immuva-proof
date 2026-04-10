@@ -5,8 +5,6 @@ type SDK = {
 };
 
 export async function loadSDK(): Promise<SDK> {
-  // SDK est hors workspace: on importe le dist directement.
-  // Le chemin est depuis packages/api/dist -> ../sdk/dist/index.js (en runtime)
-  const mod: any = await import("../../sdk/dist/index.js");
+  const mod: any = await import("@immuva/sdk");
   return mod as SDK;
 }
