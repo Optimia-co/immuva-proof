@@ -85,3 +85,5 @@ export function proofId(proof: StubInput): string {
 }
 
 export { keygen } from "./keygen.js";
+export { proveSession } from "./session.js";
+export type { SessionEvent, SessionBundle, ProofBundle } from "./session.js";
