@@ -1,4 +1,5 @@
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 
@@ -131,8 +132,8 @@ export function runProfile(opts: { profile: string; specPath: string }): RunSumm
         if (!exists(canonicalBin)) throw new Error(`missing canonical bin: ${canonicalBin}`);
 
         const input = path.join(vdir, "input", "event.json");
-        const tmpJson = path.join("/tmp", `immuva-${meta.id}-canonical.json`);
-        const tmpSha = path.join("/tmp", `immuva-${meta.id}-canonical.sha256`);
+        const tmpJson = path.join(os.tmpdir(), `immuva-${meta.id}-canonical.json`);
+        const tmpSha = path.join(os.tmpdir(), `immuva-${meta.id}-canonical.sha256`);
 
         const r = runNode(canonicalBin, [input], process.cwd());
         if (r.code !== 0) throw new Error(`canonicalize failed: ${r.stderr || r.stdout}`);
@@ -145,8 +146,14 @@ export function runProfile(opts: { profile: string; specPath: string }): RunSumm
 
         const d1 = diffFiles(eJson, tmpJson);
         const d2 = diffFiles(eSha, tmpSha);
-        if (!d1.ok) throw new Error(d1.reason!);
-        if (!d2.ok) throw new Error(d2.reason!);
+        try {
+          if (!d1.ok) throw new Error(d1.reason!);
+          if (!d2.ok) throw new Error(d2.reason!);
+        } finally {
+          for (const f of [tmpJson, tmpSha]) {
+            try { fs.unlinkSync(f); } catch { /* best-effort */ }
+          }
+        }
 
         passed += 1;
         continue;
@@ -156,7 +163,7 @@ export function runProfile(opts: { profile: string; specPath: string }): RunSumm
         if (!exists(fsmBin)) throw new Error(`missing fsm bin: ${fsmBin}`);
 
         const input = path.join(vdir, "input", "events.jsonl");
-        const tmpOut = path.join("/tmp", `immuva-${meta.id}-violations.json`);
+        const tmpOut = path.join(os.tmpdir(), `immuva-${meta.id}-violations.json`);
 
         const r = runNode(fsmBin, [input], process.cwd());
         if (r.code !== 0) throw new Error(`fsm failed: ${r.stderr || r.stdout}`);
@@ -165,7 +172,11 @@ export function runProfile(opts: { profile: string; specPath: string }): RunSumm
 
         const expected = path.join(vdir, "expected", "violations.json");
         const d = diffFiles(expected, tmpOut);
-        if (!d.ok) throw new Error(d.reason!);
+        try {
+          if (!d.ok) throw new Error(d.reason!);
+        } finally {
+          try { fs.unlinkSync(tmpOut); } catch { /* best-effort */ }
+        }
 
         passed += 1;
         continue;
@@ -176,7 +187,7 @@ export function runProfile(opts: { profile: string; specPath: string }): RunSumm
 
         const input = path.join(vdir, "input", "case.json");
         const args = meta.args ?? [];
-        const tmpOut = path.join("/tmp", `immuva-${meta.id}-verdict.json`);
+        const tmpOut = path.join(os.tmpdir(), `immuva-${meta.id}-verdict.json`);
 
         const r = runNode(verifyBin, [input, ...args], process.cwd());
         if (r.code !== 0) throw new Error(`verify failed: ${r.stderr || r.stdout}`);
@@ -187,7 +198,11 @@ export function runProfile(opts: { profile: string; specPath: string }): RunSumm
         const expected = path.join(vdir, "expected", expectedName);
 
         const d = diffFiles(expected, tmpOut);
-        if (!d.ok) throw new Error(d.reason!);
+        try {
+          if (!d.ok) throw new Error(d.reason!);
+        } finally {
+          try { fs.unlinkSync(tmpOut); } catch { /* best-effort */ }
+        }
 
         passed += 1;
         continue;
