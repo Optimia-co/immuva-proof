@@ -1,10 +1,12 @@
 {
   "name": "@immuva/verifier",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
