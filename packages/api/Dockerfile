@@ -22,6 +22,7 @@ RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # ── Copy sources ──────────────────────────────────────────────────────────────
 COPY tsconfig.json ./
+COPY tsconfig.base.json ./
 COPY packages/canonical/   packages/canonical/
 COPY packages/protocol/    packages/protocol/
 COPY packages/verifier/    packages/verifier/
