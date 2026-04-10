@@ -2,19 +2,18 @@
 
 /**
  * Immuva FSM CLI (v1)
- * Input  : JSONL (stdin) OR file path
+ * Input  : JSONL (stdin) OR file path argument
  * Output : JSON (stdout)
+ *
+ * Exit codes:
+ *   0 — validation complete (violations array may be non-empty)
+ *   1 — internal error (unparseable input, I/O failure, etc.)
  */
 
 import fs from "node:fs";
+import { validateFSM } from "../index.js";
 
-type Violation = {
-  code: string;
-  message: string;
-  event_id?: string;
-};
-
-function readEvents(): any[] {
+function readEvents(): unknown[] {
   const file = process.argv[2];
 
   let raw = "";
@@ -34,91 +33,23 @@ function readEvents(): any[] {
     .map((l) => JSON.parse(l));
 }
 
-function output(obj: any) {
+function output(obj: unknown): void {
   process.stdout.write(JSON.stringify(obj, null, 2));
 }
 
 try {
   const events = readEvents();
-
-  let firstActionId: string | null = null;
-  let seenStart = false;
-  let finished = false;
-
-  for (const ev of events) {
-    if (!ev.action_id) {
-      output({
-        action_id: null,
-        violations: [{ code: "FSM_EVENT_MISSING_ACTION_ID" }],
-      });
-      process.exit(0);
-    }
-
-    if (!firstActionId) {
-      firstActionId = ev.action_id;
-    } else if (ev.action_id !== firstActionId) {
-      output({
-        action_id: firstActionId,
-        violations: [
-          {
-            code: "FSM_CROSS_ACTION_ID",
-            message: "multiple action_id values observed",
-            event_id: ev.event_id,
-          },
-        ],
-      });
-      process.exit(0);
-    }
-
-    if (ev.kind?.endsWith(".start")) {
-      seenStart = true;
-    }
-
-    if (ev.kind?.endsWith(".finish")) {
-      if (!seenStart) {
-        output({
-          action_id: firstActionId,
-          violations: [
-            {
-              code: "FSM_INVALID_ORDER",
-              message: "finish observed before start",
-              event_id: ev.event_id,
-            },
-          ],
-        });
-        process.exit(0);
-      }
-
-      if (finished) {
-        output({
-          action_id: firstActionId,
-          violations: [
-            {
-              code: "FSM_DOUBLE_FINISH",
-              message: "multiple finish events observed",
-              event_id: ev.event_id,
-            },
-          ],
-        });
-        process.exit(0);
-      }
-
-      finished = true;
-    }
-  }
-
-  output({
-    action_id: firstActionId,
-    violations: [],
-  });
+  const result = validateFSM(events as any);
+  output(result);
   process.exit(0);
-} catch (err: any) {
+} catch (err: unknown) {
+  const msg = err instanceof Error ? err.message : String(err);
   output({
     action_id: null,
     violations: [
       {
         code: "FSM_INTERNAL_ERROR",
-        message: err?.message ?? String(err),
+        message: msg,
       },
     ],
   });
