@@ -11,7 +11,7 @@
   "dependencies": {
     "@immuva/canonical": "1.0.0",
     "@immuva/protocol": "1.0.0",
-    "@immuva/verifier": "1.0.2",
+    "@immuva/verifier": "1.0.3",
     "@noble/ed25519": "^3.0.0"
   }
 }
