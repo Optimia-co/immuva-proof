@@ -12,6 +12,7 @@ type ViolationCode =
   | "KEY_ID_REQUIRED"
   | "KEY_ID_MISMATCH"
   | "KEY_REVOKED"
+  | "KEY_ROTATED"
 
   | "REGISTRY_UNAVAILABLE"
   | "RECEIPT_KIND_NOT_ALLOWED"
@@ -89,6 +90,10 @@ export type StubKeyBinding = {
   key_id?: string;
   public_key?: string;
   key_status?: "ACTIVE" | "ROTATED" | "REVOKED";
+  /** ISO 8601 — when the key was rotated (key is no longer valid for new proofs) */
+  rotated_at?: string;
+  /** ISO 8601 — when the key was revoked (all proofs using it are invalid) */
+  revoked_at?: string;
 };
 
 export type StubInput = {
@@ -224,11 +229,31 @@ function computeStatus(input: StubInput): { status: VerdictStatus; violations: V
     const kb = input.key_binding;
     if (!kb) return ret("INVALID");
 
+    // key_id MUST equal sha256(public_key_hex) — not sha256(canonical_event)
     if (!kb.key_id) return ret("INVALID");
-    const want = sha256HexUtf8(input.canonical_event ?? "");
-    if (kb.key_id !== want) return ret("INVALID");
+    const wantKeyId = sha256HexUtf8(pub);
+    if (kb.key_id !== wantKeyId) return ret("INVALID");
 
-    if (kb.key_status === "REVOKED") return ret("INVALID");
+    // Revoked keys invalidate all proofs signed with them
+    if (kb.key_status === "REVOKED" || kb.revoked_at) {
+      violations.push("KEY_REVOKED");
+      return ret("INVALID");
+    }
+
+    // Rotated keys cannot sign new proofs; if the proof carries a
+    // time_anchor we compare timestamps — otherwise we reject conservatively.
+    if (kb.key_status === "ROTATED") {
+      violations.push("KEY_ROTATED");
+      return ret("INVALID");
+    }
+    if (kb.rotated_at) {
+      // If a time_anchor is present, the proof timestamp must be BEFORE rotation
+      const proofTs: string | undefined = input.time_anchor?.timestamp ?? input.time_anchor?.ts;
+      if (!proofTs || new Date(proofTs) >= new Date(kb.rotated_at)) {
+        violations.push("KEY_ROTATED");
+        return ret("INVALID");
+      }
+    }
   }
 
 
