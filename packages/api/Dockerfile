@@ -18,7 +18,7 @@ COPY packages/api/package.json                packages/api/
 # Stub out other workspace packages so pnpm install resolves the graph
 COPY packages/cli/package.json                packages/cli/
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 # ── Copy sources ──────────────────────────────────────────────────────────────
 COPY tsconfig.json ./

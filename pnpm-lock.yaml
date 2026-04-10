@@ -95,8 +95,8 @@ importers:
         specifier: 1.0.0
         version: 1.0.0
       '@immuva/verifier':
-        specifier: 1.0.3
-        version: 1.0.3
+        specifier: 1.0.4
+        version: 1.0.4
       '@noble/ed25519':
         specifier: ^3.0.0
         version: 3.0.0
@@ -293,6 +293,9 @@ packages:
 
   '@immuva/verifier@1.0.3':
     resolution: {integrity: sha512-CaRtgG4BOngXHXxnyNeo6UKbo4KRh66ZCIwXSKbttWlmRiHwhXmihFocWDHM721lMR0aOvd87HN/ODcTYCex8g==}
+
+  '@immuva/verifier@1.0.4':
+    resolution: {integrity: sha512-uymAXz8NUlDhYS9SoVbWrVEPNl6r1pAJeka2lK6J4LUsNPhoF721xAwK6O4McQsr2Bhr22ij8AWTygSrMOIfMg==}
 
   '@noble/ed25519@3.0.0':
     resolution: {integrity: sha512-QyteqMNm0GLqfa5SoYbSC3+Pvykwpn95Zgth4MFVSMKBB75ELl9tX1LAVsN4c3HXOrakHsF2gL4zWDAYCcsnzg==}
@@ -654,6 +657,12 @@ snapshots:
   '@immuva/protocol@1.0.0': {}
 
   '@immuva/verifier@1.0.3':
+    dependencies:
+      '@immuva/canonical': 1.0.0
+      '@immuva/protocol': 1.0.0
+      '@noble/ed25519': 3.0.0
+
+  '@immuva/verifier@1.0.4':
     dependencies:
       '@immuva/canonical': 1.0.0
       '@immuva/protocol': 1.0.0
