@@ -34,8 +34,11 @@ COPY spec/                 spec/
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 # Root tsc -b builds canonical, protocol, verifier, fsm, evidence (composite refs)
-RUN pnpm build || true
-# SDK and API are not in root tsconfig references — build them explicitly
+RUN pnpm --filter @immuva/canonical run build
+RUN pnpm --filter @immuva/protocol run build
+RUN pnpm --filter @immuva/verifier run build
+RUN pnpm --filter @immuva/fsm run build
+RUN pnpm --filter @immuva/evidence run build
 RUN pnpm --filter @immuva/sdk run build
 RUN pnpm --filter @immuva/api run build
 
