@@ -1,0 +1,28 @@
+{
+  "name": "@immuva/openai",
+  "version": "0.1.0",
+  "description": "OpenAI wrapper for Immuva Proof — automatic cryptographic proofs on every LLM call",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types":  "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@immuva/sdk": "workspace:*"
+  },
+  "peerDependencies": {
+    "openai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "openai": { "optional": false }
+  },
+  "keywords": ["immuva", "openai", "ai", "proof", "audit", "llm"],
+  "license": "MIT"
+}

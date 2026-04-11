@@ -88,7 +88,7 @@ importers:
         version: link:../sdk
       '@langchain/core':
         specifier: ^0.3.0
-        version: 0.3.80
+        version: 0.3.80(openai@6.34.0(ws@8.20.0)(zod@3.25.76))
 
   packages/n8n-node:
     dependencies:
@@ -107,6 +107,15 @@ importers:
       '@immuva/protocol':
         specifier: workspace:*
         version: link:../protocol
+
+  packages/openai:
+    dependencies:
+      '@immuva/sdk':
+        specifier: workspace:*
+        version: link:../sdk
+      openai:
+        specifier: '>=4.0.0'
+        version: 6.34.0(ws@8.20.0)(zod@3.25.76)
 
   packages/policy: {}
 
@@ -966,6 +975,18 @@ packages:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
     engines: {node: '>=14.0.0'}
 
+  openai@6.34.0:
+    resolution: {integrity: sha512-yEr2jdGf4tVFYG6ohmr3pF6VJuveP0EA/sS8TBx+4Eq5NT10alu5zg2dmxMXMgqpihRDQlFGpRt2XwsGj+Fyxw==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   openapi-types@12.1.3:
     resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
 
@@ -1431,14 +1452,14 @@ snapshots:
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
 
-  '@langchain/core@0.3.80':
+  '@langchain/core@0.3.80(openai@6.34.0(ws@8.20.0)(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.87
+      langsmith: 0.3.87(openai@6.34.0(ws@8.20.0)(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -2016,7 +2037,7 @@ snapshots:
 
   jssha@3.3.1: {}
 
-  langsmith@0.3.87:
+  langsmith@0.3.87(openai@6.34.0(ws@8.20.0)(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -2024,6 +2045,8 @@ snapshots:
       p-queue: 6.6.2
       semver: 7.7.3
       uuid: 10.0.0
+    optionalDependencies:
+      openai: 6.34.0(ws@8.20.0)(zod@3.25.76)
 
   light-my-request@5.14.0:
     dependencies:
@@ -2112,6 +2135,11 @@ snapshots:
       object-keys: 1.1.1
 
   on-exit-leak-free@2.1.2: {}
+
+  openai@6.34.0(ws@8.20.0)(zod@3.25.76):
+    optionalDependencies:
+      ws: 8.20.0
+      zod: 3.25.76
 
   openapi-types@12.1.3: {}
 
