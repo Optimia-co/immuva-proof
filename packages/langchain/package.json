@@ -1,6 +1,6 @@
 {
   "name": "@immuva/langchain",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "LangChain callback handler and tracer for Immuva Proof",
   "type": "module",
   "main": "dist/index.js",

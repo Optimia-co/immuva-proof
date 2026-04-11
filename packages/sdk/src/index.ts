@@ -11,8 +11,8 @@ type VerifyWithDetailsFn =
   (input: any, offline?: boolean, ctx?: any) => any;
 
 async function loadVerifier(): Promise<VerifyWithDetailsFn> {
-  // runtime import (verifier built first)
-  const mod: any = await import("../../verifier/dist/index.js");
+  // Import by package name — works both in monorepo and when installed from npm.
+  const mod: any = await import("@immuva/verifier");
   return mod.verifyWithDetails;
 }
 
