@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes, createHmac } from "node:crypto";
 
 export type WebhookEvent = "proof.created" | "proof.verified";
 
@@ -7,6 +7,16 @@ export interface WebhookRegistration {
   url: string;
   events: WebhookEvent[];
   created_at: string;
+  /** HMAC secret — returned once at registration, not stored in list() */
+  secret?: string;
+}
+
+interface WebhookEntry {
+  id: string;
+  url: string;
+  events: WebhookEvent[];
+  created_at: string;
+  secret: string;
 }
 
 export interface WebhookPayload {
@@ -16,21 +26,24 @@ export interface WebhookPayload {
 }
 
 export class WebhookRegistry {
-  private readonly store = new Map<string, WebhookRegistration>();
+  private readonly store = new Map<string, WebhookEntry>();
 
   register(url: string, events: WebhookEvent[]): WebhookRegistration {
-    const reg: WebhookRegistration = {
+    const secret = randomBytes(32).toString("hex");
+    const entry: WebhookEntry = {
       id: randomUUID(),
       url,
       events,
       created_at: new Date().toISOString(),
+      secret,
     };
-    this.store.set(reg.id, reg);
-    return reg;
+    this.store.set(entry.id, entry);
+    // Return secret once — caller must store it
+    return { ...entry };
   }
 
-  list(): WebhookRegistration[] {
-    return [...this.store.values()];
+  list(): Omit<WebhookEntry, "secret">[] {
+    return [...this.store.values()].map(({ secret: _s, ...rest }) => rest);
   }
 
   async notify(event: WebhookEvent, data: unknown): Promise<void> {
@@ -40,19 +53,27 @@ export class WebhookRegistry {
       data,
     };
 
+    const body = JSON.stringify(payload);
     const targets = [...this.store.values()].filter((r) =>
       r.events.includes(event)
     );
 
     await Promise.allSettled(
-      targets.map((reg) =>
-        fetch(reg.url, {
+      targets.map((reg) => {
+        const sig = createHmac("sha256", reg.secret)
+          .update(body)
+          .digest("hex");
+
+        return fetch(reg.url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          headers: {
+            "Content-Type": "application/json",
+            "X-Immuva-Signature": `sha256=${sig}`,
+          },
+          body,
           signal: AbortSignal.timeout(5000),
-        })
-      )
+        });
+      })
     );
   }
 }

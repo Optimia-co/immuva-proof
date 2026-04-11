@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import rateLimit from "@fastify/rate-limit";
 import { loadSDK } from "./sdk-loader.js";
 import { WebhookRegistry } from "./webhooks.js";
 import type { WebhookEvent } from "./webhooks.js";
@@ -15,16 +16,43 @@ const app = Fastify({
   },
 });
 
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+await app.register(rateLimit, {
+  max: 100,
+  timeWindow: "1 minute",
+  errorResponseBuilder: () => ({
+    error: "RATE_LIMITED",
+    message: "Too many requests, please try again later",
+  }),
+});
+
 const webhooks = new WebhookRegistry();
 const tlog     = new TransparencyLog();
 
+// ── API key auth ──────────────────────────────────────────────────────────────
+const API_KEY = process.env.IMMUVA_API_KEY ?? "";
+
+function requireApiKey(request: any, reply: any, done: any) {
+  if (!API_KEY) return done(); // disabled if not configured
+  const key =
+    request.headers["x-api-key"] ??
+    (request.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
+  if (!key || key !== API_KEY) {
+    return reply.status(401).send({
+      error: "UNAUTHORIZED",
+      message: "Missing or invalid API key",
+    });
+  }
+  done();
+}
+
 // ── Health endpoint (required by Fly.io) ─────────────────────────────────────
 app.get("/health", async () => {
-  return { status: "ok", service: "immuva-api", version: "0.2.0" };
+  return { status: "ok", service: "immuva-api", version: "0.3.0" };
 });
 
 // ── /v1/proofs ────────────────────────────────────────────────────────────────
-app.post("/v1/proofs", async (req, reply) => {
+app.post("/v1/proofs", { preHandler: requireApiKey }, async (req, reply) => {
   const sdk = await loadSDK();
   const body: any = req.body ?? {};
 
@@ -68,7 +96,7 @@ app.post("/v1/verify", async (req, reply) => {
 });
 
 // ── /v1/webhooks/register ─────────────────────────────────────────────────────
-app.post("/v1/webhooks/register", async (req, reply) => {
+app.post("/v1/webhooks/register", { preHandler: requireApiKey }, async (req, reply) => {
   const body: any = req.body ?? {};
 
   if (!body.url)    return reply.code(400).send({ error: "MISSING:url" });
@@ -93,7 +121,7 @@ app.get("/v1/webhooks", async () => {
 });
 
 // ── /v1/tlog/append ───────────────────────────────────────────────────────────
-app.post("/v1/tlog/append", async (req, reply) => {
+app.post("/v1/tlog/append", { preHandler: requireApiKey }, async (req, reply) => {
   const body: any = req.body ?? {};
   if (!body.data) return reply.code(400).send({ error: "MISSING:data" });
   const entry = tlog.append(body.data);

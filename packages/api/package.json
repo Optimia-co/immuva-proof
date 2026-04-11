@@ -11,6 +11,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@fastify/rate-limit": "^10.3.0",
     "@immuva/sdk": "workspace:*",
     "fastify": "^4.28.1"
   }

@@ -468,8 +468,21 @@ export function explainVerdict(input: StubInput): VerdictExplanation {
 
   // 4) SIGNATURE_INVALID
   if (input.signing) {
-    const want = sha256HexUtf8(input.canonical_event ?? "");
-    const ok = input.signing.signature === want;
+    let ok: boolean;
+    if (input.signing.crypto_suite === "IMMUVAv2-ED25519-SHA256") {
+      // v2: Ed25519 signature verified against sha256(canonical_event)
+      ok = input.signing.public_key
+        ? verifyEd25519Signature(
+            input.canonical_event ?? "",
+            input.signing.signature,
+            input.signing.public_key
+          )
+        : false;
+    } else {
+      // v1: signature == sha256(canonical_event) hex
+      const want = sha256HexUtf8(input.canonical_event ?? "");
+      ok = input.signing.signature === want;
+    }
     steps.push({
       step: 4,
       rule: "SIGNATURE_INVALID",
@@ -486,6 +499,64 @@ export function explainVerdict(input: StubInput): VerdictExplanation {
       rule: "KEY_BINDING_MISMATCH",
       outcome: ok ? "pass" : "fail",
       violations: ok ? undefined : ["KEY_BINDING_MISMATCH"]
+    });
+  }
+
+  // 6) NON_EQUIVOCATION_VIOLATION
+  if (input.canonical_events && input.canonical_events.length > 1) {
+    const normalized: string[] = [];
+    let structuralError = false;
+    for (const s of input.canonical_events) {
+      try {
+        const obj = JSON.parse(s);
+        normalized.push(canonicalizeJson(obj).canonical);
+      } catch {
+        structuralError = true;
+        break;
+      }
+    }
+    const equivocating = structuralError || new Set(normalized).size > 1;
+    steps.push({
+      step: 6,
+      rule: "NON_EQUIVOCATION_VIOLATION",
+      outcome: equivocating ? "fail" : "pass",
+      violations: equivocating ? ["NON_EQUIVOCATION_VIOLATION"] : undefined
+    });
+  }
+
+  // 7) RESULTSET_MISSING / PENDING
+  const hasResultset = input.resultset_present === true;
+  const terminal = input.terminal_present === true || input.outcome !== undefined;
+  if (!hasResultset) {
+    steps.push({
+      step: 7,
+      rule: "RESULTSET_MISSING",
+      outcome: "fail",
+      violations: terminal ? ["RESULTSET_MISSING_BUT_TERMINAL"] : ["RESULTSET_MISSING"]
+    });
+  } else {
+    steps.push({ step: 7, rule: "RESULTSET_MISSING", outcome: "pass" });
+  }
+
+  // 8) OUTCOME_BASIS_CONFLICT / CONTESTED
+  if (hasResultset && input.evidence && input.outcome) {
+    const conflict = input.outcome.basis !== input.evidence.effective;
+    steps.push({
+      step: 8,
+      rule: "OUTCOME_BASIS_CONFLICT",
+      outcome: conflict ? "fail" : "pass",
+      violations: conflict ? ["OUTCOME_BASIS_CONFLICT"] : undefined
+    });
+  }
+
+  // 9) EVIDENCE_NOT_QUALIFIED / AWAITING_EVIDENCE
+  if (hasResultset && input.evidence) {
+    const qualified = input.evidence.qualified;
+    steps.push({
+      step: 9,
+      rule: "EVIDENCE_NOT_QUALIFIED",
+      outcome: qualified ? "pass" : "fail",
+      violations: qualified ? undefined : ["EVIDENCE_NOT_QUALIFIED"]
     });
   }
 

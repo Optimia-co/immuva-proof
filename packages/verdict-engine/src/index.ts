@@ -1,9 +1,31 @@
 import type { StubInput, Verdict } from "@immuva/protocol";
 
+export type VerdictStatus =
+  | "VALID"
+  | "INVALID"
+  | "PENDING"
+  | "AWAITING_EVIDENCE"
+  | "CONTESTED"
+  | "NON_CLOSABLE";
+
+const TERMINAL_STATUSES = new Set<VerdictStatus>(["VALID", "INVALID", "CONTESTED"]);
+
+export function computeVerdict(violations: string[]): VerdictStatus {
+  if (violations.length === 0) return "VALID";
+  if (violations.includes("RESULTSET_MISSING")) return "PENDING";
+  if (violations.includes("EVIDENCE_NOT_QUALIFIED")) return "AWAITING_EVIDENCE";
+  if (violations.includes("NON_CLOSABLE_SIGNAL")) return "NON_CLOSABLE";
+  if (violations.includes("OUTCOME_BASIS_CONFLICT")) return "CONTESTED";
+  return "INVALID";
+}
+
+export function isTerminalVerdict(status: VerdictStatus): boolean {
+  return TERMINAL_STATUSES.has(status);
+}
+
 /**
- * Verdict engine (pur)
- * Construit UNIQUEMENT un verdict VALID.
- * Le choix du status (INVALID/PENDING/...) reste dans verifier.
+ * Render a VALID verdict object.
+ * Status selection (INVALID/PENDING/…) remains in verifier — this is pure composition.
  */
 export function renderValidVerdict(
   input: StubInput,
@@ -18,5 +40,5 @@ export function renderValidVerdict(
   };
 }
 
-// Alias de compat temporaire (si des imports existent encore)
+// Compatibility alias
 export const computeStatus = renderValidVerdict;

@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: immuva
+Version: 1.0.0
+Summary: Python SDK for Immuva Proof — IMMUVAv2-ED25519-SHA256
+License: MIT
+Keywords: immuva,proof,ai,audit,ed25519
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: cryptography>=42.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"

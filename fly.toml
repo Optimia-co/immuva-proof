@@ -8,6 +8,8 @@ primary_region = "cdg"
   PORT = "3000"
   HOST = "0.0.0.0"
   IMMUVA_SPEC_ROOT = "/monorepo/spec"
+  # IMMUVA_API_KEY — set via: flyctl secrets set IMMUVA_API_KEY=<secret>
+  # Leave unset in env to disable auth (dev mode). Set via secrets for production.
 
 [http_service]
   internal_port = 3000
