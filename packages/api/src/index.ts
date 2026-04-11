@@ -111,27 +111,36 @@ app.post("/v1/webhooks/register", { preHandler: requireApiKey }, async (req, rep
     return reply.code(400).send({ error: `INVALID:unknown events: ${invalid.join(", ")}` });
   }
 
-  const registration = webhooks.register(body.url, body.events as WebhookEvent[]);
+  const registration = await webhooks.register(body.url, body.events as WebhookEvent[]);
   return { webhook: registration };
 });
 
 // ── /v1/webhooks ──────────────────────────────────────────────────────────────
 app.get("/v1/webhooks", async () => {
-  return { webhooks: webhooks.list() };
+  return { webhooks: await webhooks.list() };
+});
+
+// ── DELETE /v1/webhooks/:id ───────────────────────────────────────────────────
+app.delete("/v1/webhooks/:id", { preHandler: requireApiKey }, async (req, reply) => {
+  const { id } = req.params as any;
+  const ok = await webhooks.delete(id);
+  if (!ok) return reply.code(404).send({ error: "NOT_FOUND" });
+  return { deleted: id };
 });
 
 // ── /v1/tlog/append ───────────────────────────────────────────────────────────
 app.post("/v1/tlog/append", { preHandler: requireApiKey }, async (req, reply) => {
   const body: any = req.body ?? {};
   if (!body.data) return reply.code(400).send({ error: "MISSING:data" });
-  const entry = tlog.append(body.data);
-  return { entry, ...tlog.latest() };
+  const entry = await tlog.append(body.data);
+  const latest = await tlog.latest();
+  return { entry, ...latest };
 });
 
 // ── /v1/tlog/proof/:index ─────────────────────────────────────────────────────
 app.get("/v1/tlog/proof/:index", async (req, reply) => {
   const { index } = (req.params as any);
-  const result = tlog.proof(Number(index));
+  const result = await tlog.proof(Number(index));
   if (!result) return reply.code(404).send({ error: "NOT_FOUND" });
   return result;
 });
