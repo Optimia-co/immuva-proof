@@ -16,6 +16,8 @@ COPY packages/verdict-engine/package.json     packages/verdict-engine/
 COPY packages/verifier/package.json           packages/verifier/
 COPY packages/fsm/package.json                packages/fsm/
 COPY packages/evidence/package.json           packages/evidence/
+COPY packages/events/package.json             packages/events/
+COPY packages/policy/package.json             packages/policy/
 COPY packages/sdk/package.json                packages/sdk/
 COPY packages/api/package.json                packages/api/
 COPY packages/cli/package.json                packages/cli/
@@ -34,6 +36,8 @@ COPY packages/verdict-engine/   packages/verdict-engine/
 COPY packages/verifier/         packages/verifier/
 COPY packages/fsm/              packages/fsm/
 COPY packages/evidence/         packages/evidence/
+COPY packages/events/           packages/events/
+COPY packages/policy/           packages/policy/
 COPY packages/sdk/              packages/sdk/
 COPY packages/api/              packages/api/
 COPY spec/                      spec/
