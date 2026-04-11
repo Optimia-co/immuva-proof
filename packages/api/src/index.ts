@@ -16,9 +16,15 @@ const app = Fastify({
   },
 });
 
-// ── Rate limiting ─────────────────────────────────────────────────────────────
+// ── Rate limiting (per-API-key: 1000/min authenticated, 10/min anonymous) ─────
 await app.register(rateLimit, {
-  max: 100,
+  keyGenerator: (req: any) => {
+    const key =
+      (req.headers["x-api-key"] as string | undefined) ??
+      (req.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
+    return key ? `key:${key}` : `ip:${req.ip}`;
+  },
+  max: async (_req: any, key: string) => (key.startsWith("key:") ? 1000 : 10),
   timeWindow: "1 minute",
   errorResponseBuilder: () => ({
     error: "RATE_LIMITED",

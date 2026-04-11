@@ -133,16 +133,40 @@ export class WebhookRegistry {
           .update(body)
           .digest("hex");
 
-        return fetch(reg.url, {
+        return fetchWithRetry(reg.url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "X-Immuva-Signature": `sha256=${sig}`,
           },
           body,
-          signal: AbortSignal.timeout(5000),
         });
       })
     );
   }
+}
+
+// ── Retry helper with exponential backoff ─────────────────────────────────────
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  attempts = 3,
+  delaysMs: number[] = [1000, 5000, 30000]
+): Promise<void> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, {
+        ...init,
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (res.ok) return;
+      console.warn(`[webhook] attempt ${i + 1}/${attempts} → HTTP ${res.status} for ${url}`);
+    } catch (err: any) {
+      console.warn(`[webhook] attempt ${i + 1}/${attempts} failed for ${url}: ${err.message}`);
+    }
+    if (i < attempts - 1) {
+      await new Promise((r) => setTimeout(r, delaysMs[i]));
+    }
+  }
+  console.error(`[webhook] all ${attempts} attempts failed for ${url}`);
 }
