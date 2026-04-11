@@ -1,0 +1,26 @@
+{
+  "name": "@immuva/langchain",
+  "version": "1.0.0",
+  "description": "LangChain callback handler and tracer for Immuva Proof",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@immuva/sdk": "workspace:*",
+    "@langchain/core": "^0.3.0"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.2.0"
+  },
+  "keywords": ["immuva", "langchain", "ai", "proof", "audit"],
+  "license": "MIT"
+}

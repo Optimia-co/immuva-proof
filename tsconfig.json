@@ -1,24 +1,24 @@
 {
   "files": [],
   "references": [
-    {
-      "path": "./packages/registries"
-    },
-    {
-      "path": "./packages/conformance-runner"
-    },
-    {
-      "path": "./packages/canonical"
-    },
-    {
-      "path": "./packages/fsm"
-    },
-    {
-      "path": "./packages/verifier"
-    },
-    {
-      "path": "./packages/evidence"
-    }
+    { "path": "./packages/protocol" },
+    { "path": "./packages/canonical" },
+    { "path": "./packages/fsm" },
+    { "path": "./packages/evidence" },
+    { "path": "./packages/identity" },
+    { "path": "./packages/receipts" },
+    { "path": "./packages/non-equivocation" },
+    { "path": "./packages/verdict-engine" },
+    { "path": "./packages/events" },
+    { "path": "./packages/policy" },
+    { "path": "./packages/verifier" },
+    { "path": "./packages/sdk" },
+    { "path": "./packages/cli" },
+    { "path": "./packages/api" },
+    { "path": "./packages/langchain" },
+    { "path": "./packages/n8n-node" },
+    { "path": "./packages/registries" },
+    { "path": "./packages/conformance-runner" }
   ],
   "compilerOptions": {
     "baseUrl": ".",
