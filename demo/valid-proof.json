@@ -9,15 +9,15 @@
     "value": "approve",
     "basis": "R1"
   },
-  "canonical_event": "{\"amount\":4200,\"currency\":\"EUR\",\"decision\":\"approve\",\"kind\":\"PAYMENT_DECISION\",\"payment_id\":\"pay_demo_001\",\"reason\":\"risk_below_threshold\",\"risk_score\":0.12}",
+  "canonical_event": "{\"agent_id\":\"agent-demo-001\",\"amount\":4200,\"currency\":\"EUR\",\"decision\":\"approve\",\"kind\":\"PAYMENT_DECISION\"}",
   "signing": {
     "crypto_suite": "IMMUVAv2-ED25519-SHA256",
-    "signature": "651abe3d4547e5fdf1877f504d5f6c0678220d9e32cbb75c077a6533395349939db85cdf94994e281f3382acf1bc79f83a1cb195d3e34dc4e01e1087ac38a209",
-    "public_key": "060bba643de561f8ca93ffa374e3d159b11dded7506e143ef8e776852061bc7b"
+    "signature": "fa9fb9d29522228f9cdd576428ee9058e74d8b6ef557276d66ff4ac72710cfebb0f4bbfd02922eb72e3735ab7e3fcf34f68d1172c5fec098098d85fc63c6c60d",
+    "public_key": "6c2c067b99f804ea87b79a4713baeb34b2e3e3160e2b890b3302f17353ee26a9"
   },
   "key_binding": {
-    "public_key": "060bba643de561f8ca93ffa374e3d159b11dded7506e143ef8e776852061bc7b",
-    "key_id": "bcf2c23d2b0a502ad794b4bbfd83eb132d63af96ce9b94fcee67da5e1464d639",
+    "public_key": "6c2c067b99f804ea87b79a4713baeb34b2e3e3160e2b890b3302f17353ee26a9",
+    "key_id": "fe05bc638d8c9f492e69991661eb4b31ade91cd7739cbd0280cafcd317a634af",
     "key_status": "ACTIVE"
   }
 }

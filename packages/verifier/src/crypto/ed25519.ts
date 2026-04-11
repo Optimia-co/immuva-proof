@@ -1,6 +1,11 @@
 import * as ed25519 from "@noble/ed25519";
 import { createHash } from "node:crypto";
 
+// Noble ed25519 v3 requires explicit sha512 injection.
+// This module-level side effect runs once on first import.
+(ed25519.hashes as any).sha512 = (m: Uint8Array) =>
+  createHash("sha512").update(Buffer.from(m)).digest();
+
 /**
  * Verify an Ed25519 signature over sha256(canonical_event).
  * Deterministic, synchronous, side-effect free.

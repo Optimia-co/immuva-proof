@@ -8,7 +8,7 @@
     "build": "tsc -b"
   },
   "dependencies": {
-    "@immuva/verifier": "1.0.3",
+    "@immuva/verifier": "workspace:*",
     "@noble/ed25519": "^3.0.0"
   }
 }
