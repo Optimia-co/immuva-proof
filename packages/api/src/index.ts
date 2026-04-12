@@ -221,6 +221,12 @@ app.post(
       // Verify the proof to get status + proof_level for storage
       const verdict = await sdk.verify(proof, { offline: true });
 
+      // Compute proof_level from proof structure (verifyWithDetails doesn't return it)
+      const proof_level = proof.transparency_log ? "TRANSPARENCY_LOGGED"
+        : proof.time_anchor ? "TIME_ANCHORED"
+        : proof.key_binding ? "KEY_BOUND"
+        : "BASIC";
+
       // Persist to Supabase (non-blocking)
       if (supabase) {
         supabase.from("proofs").insert({
@@ -238,7 +244,7 @@ app.post(
           outcome_value:      proof.outcome?.value,
           outcome_basis:      proof.outcome?.basis,
           status:             verdict.status,
-          proof_level:        verdict.proof_level ?? "BASIC",
+          proof_level,
         }).select("id").single().then(({ data, error }) => {
           if (error) { console.warn("[proofs] DB insert failed:", error.message); return; }
           // Non-blocking: append to transparency log, then record index
@@ -312,6 +318,12 @@ app.post(
     try {
       const verdict = await sdk.verify(proof, { offline: true });
 
+      // Compute proof_level from proof structure (verifyWithDetails doesn't return it)
+      const proof_level = proof.transparency_log ? "TRANSPARENCY_LOGGED"
+        : proof.time_anchor ? "TIME_ANCHORED"
+        : proof.key_binding ? "KEY_BOUND"
+        : "BASIC";
+
       if (supabase) {
         supabase.from("proofs").insert({
           org_id:             (req as any).orgId ?? null,
@@ -328,7 +340,7 @@ app.post(
           outcome_value:      proof.outcome?.value,
           outcome_basis:      proof.outcome?.basis,
           status:             verdict.status,
-          proof_level:        verdict.proof_level ?? "BASIC",
+          proof_level,
         }).select("id").single().then(({ data, error }) => {
           if (error) { console.warn("[proofs/submit] DB insert failed:", error.message); return; }
           tlog.append({

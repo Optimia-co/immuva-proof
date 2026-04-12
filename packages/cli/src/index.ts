@@ -14,7 +14,6 @@ function usage(): never {
   console.error("");
   console.error("Options:");
   console.error("  --offline                        Offline mode");
-  console.error("  --proof-levels                   Show proof level");
   console.error("  --min-proof-level <level>        Require minimum proof level");
   console.error("                                   Levels: BASIC | KEY_BOUND | TIME_ANCHORED | TRANSPARENCY_LOGGED");
   process.exit(2);
