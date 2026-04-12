@@ -2,11 +2,22 @@ import Fastify from "fastify";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import { createHash } from "node:crypto";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { loadSDK } from "./sdk-loader.js";
 import { WebhookRegistry } from "./webhooks.js";
 import type { WebhookEvent } from "./webhooks.js";
 import { TransparencyLog } from "./tlog.js";
 import { AuditLog } from "./audit-log.js";
+
+// ── Supabase (service role — bypasses RLS) ────────────────────────────────────
+function makeSupabase(): SupabaseClient | null {
+  const url = process.env.SUPABASE_URL ?? "";
+  const key = process.env.SUPABASE_SERVICE_KEY ?? "";
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
+}
+const supabase = makeSupabase();
 
 const app = Fastify({
   logger: {
@@ -63,20 +74,38 @@ const tlog     = new TransparencyLog();
 const auditLog = new AuditLog();
 
 // ── API key auth ──────────────────────────────────────────────────────────────
-const API_KEY = process.env.IMMUVA_API_KEY ?? "";
+const SERVER_KEY = process.env.IMMUVA_API_KEY ?? "";
 
-function requireApiKey(request: any, reply: any, done: any) {
-  if (!API_KEY) return done(); // disabled if not configured
+async function requireApiKey(request: any, reply: any, done: any) {
   const key =
-    request.headers["x-api-key"] ??
+    (request.headers["x-api-key"] as string | undefined) ??
     (request.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
-  if (!key || key !== API_KEY) {
-    return reply.status(401).send({
-      error: "UNAUTHORIZED",
-      message: "Missing or invalid API key",
-    });
+
+  if (!key) {
+    return reply.status(401).send({ error: "UNAUTHORIZED", message: "Missing API key" });
   }
-  done();
+
+  // 1. Vérifie la clé serveur (rétrocompatibilité)
+  if (SERVER_KEY && key === SERVER_KEY) {
+    return done();
+  }
+
+  // 2. Vérifie les clés dashboard (sha256 lookup dans api_keys)
+  if (supabase) {
+    const keyHash = createHash("sha256").update(key).digest("hex");
+    const { data } = await supabase
+      .from("api_keys")
+      .select("id, org_id, permissions, revoked_at")
+      .eq("key_hash", keyHash)
+      .is("revoked_at", null)
+      .single();
+    if (data) {
+      request.orgId = data.org_id;
+      return done();
+    }
+  }
+
+  return reply.status(401).send({ error: "UNAUTHORIZED", message: "Invalid API key" });
 }
 
 // ── Audit log middleware ──────────────────────────────────────────────────────
@@ -167,6 +196,33 @@ app.post(
 
     try {
       const proof = await sdk.prove(body);
+
+      // Verify the proof to get status + proof_level for storage
+      const verdict = await sdk.verify(proof, { offline: true });
+
+      // Persist to Supabase (non-blocking)
+      if (supabase) {
+        supabase.from("proofs").insert({
+          org_id:             (req as any).orgId ?? null,
+          agent_id:           body.agent_id ?? null,
+          proof_json:         proof,
+          canonical_event:    proof.canonical_event,
+          crypto_suite:       proof.signing?.crypto_suite,
+          public_key:         proof.signing?.public_key,
+          key_id:             proof.key_binding?.key_id,
+          key_status:         proof.key_binding?.key_status,
+          evidence_effective: proof.evidence?.effective,
+          evidence_required:  proof.evidence?.required,
+          evidence_qualified: proof.evidence?.qualified,
+          outcome_value:      proof.outcome?.value,
+          outcome_basis:      proof.outcome?.basis,
+          status:             verdict.status,
+          proof_level:        verdict.proof_level ?? "BASIC",
+        }).then(({ error }) => {
+          if (error) console.warn("[proofs] DB insert failed:", error.message);
+        });
+      }
+
       webhooks.notify("proof.created", proof).catch(() => {});
       return { proof };
     } catch (err: any) {
