@@ -107,7 +107,7 @@ export type Verdict = {
   violations?: string[];
 };
 
-export const ALLOWED_RECEIPT_KINDS = new Set(["R1", "R2", "ENV_ATTEST", "NON_CLOSABLE"]);
+export const ALLOWED_RECEIPT_KINDS = new Set(["R1", "R2", "ENV_ATTEST", "NON_CLOSABLE", "AUDIT_LOG", "LLM_DECISION", "TOOL_CALL", "TOOL_RESULT"]);
 
 export function receiptRank(kind: string): number | null {
   const m = /^R(\d+)$/.exec(kind);

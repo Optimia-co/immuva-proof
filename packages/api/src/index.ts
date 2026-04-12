@@ -100,12 +100,29 @@ async function requireApiKey(request: any, reply: any, done: any) {
       .is("revoked_at", null)
       .single();
     if (data) {
-      request.orgId = data.org_id;
+      request.orgId       = data.org_id;
+      request.permissions = data.permissions ?? null;
+      // Non-blocking: track last usage of this key
+      supabase.from("api_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", data.id)
+        .then(() => {});
       return done();
     }
   }
 
   return reply.status(401).send({ error: "UNAUTHORIZED", message: "Invalid API key" });
+}
+
+// ── Permission guard (applies after requireApiKey sets request.permissions) ───
+function requirePermission(perm: string) {
+  return async (request: any, reply: any) => {
+    const perms: string[] | null = request.permissions ?? null;
+    // null = no restrictions (server key or legacy key without scopes)
+    if (perms !== null && !perms.includes(perm)) {
+      return reply.status(403).send({ error: "FORBIDDEN", message: `Missing permission: ${perm}` });
+    }
+  };
 }
 
 // ── Audit log middleware ──────────────────────────────────────────────────────
@@ -152,7 +169,7 @@ app.get(
 app.post(
   "/v1/proofs",
   {
-    preHandler: requireApiKey,
+    preHandler: [requireApiKey, requirePermission("proofs:write")],
     schema: {
       summary: "Generate a cryptographic proof",
       tags: ["Proofs"],
@@ -219,7 +236,13 @@ app.post(
           status:             verdict.status,
           proof_level:        verdict.proof_level ?? "BASIC",
         }).then(({ error }) => {
-          if (error) console.warn("[proofs] DB insert failed:", error.message);
+          if (error) { console.warn("[proofs] DB insert failed:", error.message); return; }
+          // Non-blocking: append to transparency log
+          tlog.append({
+            key_id: proof.key_binding?.key_id,
+            status: verdict.status,
+            crypto_suite: proof.signing?.crypto_suite,
+          }).catch(() => {});
         });
       }
 
@@ -229,6 +252,88 @@ app.post(
       return reply.code(400).send({
         error:   "INVALID_REQUEST",
         message: err?.message ?? "Failed to generate proof",
+      });
+    }
+  }
+);
+
+// ── /v1/proofs/submit ─────────────────────────────────────────────────────────
+// Accepts a pre-signed ProofBundle (no private key required server-side).
+app.post(
+  "/v1/proofs/submit",
+  {
+    preHandler: [requireApiKey, requirePermission("proofs:write")],
+    schema: {
+      summary: "Submit a pre-signed proof",
+      tags: ["Proofs"],
+      security: [{ ApiKeyAuth: [] }],
+      body: {
+        type: "object",
+        required: ["proof"],
+        properties: {
+          proof:    { type: "object", description: "Pre-signed ProofBundle" },
+          agent_id: { type: "string", description: "Agent identifier" },
+        },
+      },
+      response: {
+        200: {
+          type: "object",
+          properties: { verdict: { type: "object" } },
+        },
+        400: {
+          type: "object",
+          properties: { error: { type: "string" }, message: { type: "string" } },
+        },
+        401: {
+          type: "object",
+          properties: { error: { type: "string" }, message: { type: "string" } },
+        },
+      },
+    },
+  },
+  async (req, reply) => {
+    const sdk = await loadSDK();
+    const body: any = req.body ?? {};
+    const proof = body.proof;
+
+    if (!proof) return reply.code(400).send({ error: "MISSING:proof" });
+
+    try {
+      const verdict = await sdk.verify(proof, { offline: true });
+
+      if (supabase) {
+        supabase.from("proofs").insert({
+          org_id:             (req as any).orgId ?? null,
+          agent_id:           body.agent_id ?? null,
+          proof_json:         proof,
+          canonical_event:    proof.canonical_event,
+          crypto_suite:       proof.signing?.crypto_suite,
+          public_key:         proof.signing?.public_key,
+          key_id:             proof.key_binding?.key_id,
+          key_status:         proof.key_binding?.key_status,
+          evidence_effective: proof.evidence?.effective,
+          evidence_required:  proof.evidence?.required,
+          evidence_qualified: proof.evidence?.qualified,
+          outcome_value:      proof.outcome?.value,
+          outcome_basis:      proof.outcome?.basis,
+          status:             verdict.status,
+          proof_level:        verdict.proof_level ?? "BASIC",
+        }).then(({ error }) => {
+          if (error) { console.warn("[proofs/submit] DB insert failed:", error.message); return; }
+          tlog.append({
+            key_id: proof.key_binding?.key_id,
+            status: verdict.status,
+            crypto_suite: proof.signing?.crypto_suite,
+          }).catch(() => {});
+        });
+      }
+
+      webhooks.notify("proof.created", proof).catch(() => {});
+      return { verdict };
+    } catch (err: any) {
+      return reply.code(400).send({
+        error:   "INVALID_PROOF",
+        message: err?.message ?? "Failed to verify proof",
       });
     }
   }
