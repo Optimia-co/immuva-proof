@@ -401,9 +401,12 @@ export function verifyWithDetails(
 
 if (!provider) {
   return {
-    status: "INVALID",
+    status,
+    evidence: input.evidence,
+    outcome: input.outcome,
+    pointers: input.pointers,
     mode: offline ? "offline" : undefined,
-    violations: [{ code: "REGISTRY_UNAVAILABLE", severity: "invalid" }]
+    violations: violations.map((v) => ({ code: v, severity: "invalid" as const }))
   };
 }
 

@@ -40,13 +40,12 @@ if (cmd === "verify") {
   }
 
   const offline = args.includes("--offline");
-  const proofLevels = args.includes("--proof-levels");
 
   const minIdx = args.indexOf("--min-proof-level");
   const minProofLevel = minIdx > -1 ? args[minIdx + 1] : undefined;
 
   const verdict = verifyStub(input, offline, {
-    proof_levels: proofLevels,
+    proof_levels: true,
     min_proof_level: minProofLevel,
   });
 

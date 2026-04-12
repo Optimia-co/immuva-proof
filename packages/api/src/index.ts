@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
@@ -52,6 +53,9 @@ await app.register(swaggerUi, {
   routePrefix: "/docs",
   uiConfig: { docExpansion: "list", deepLinking: true },
 });
+
+// ── CORS ──────────────────────────────────────────────────────────────────────
+await app.register(cors, { origin: true });
 
 // ── Rate limiting (per-API-key: 1000/min authenticated, 10/min anonymous) ─────
 await app.register(rateLimit, {
@@ -235,13 +239,20 @@ app.post(
           outcome_basis:      proof.outcome?.basis,
           status:             verdict.status,
           proof_level:        verdict.proof_level ?? "BASIC",
-        }).then(({ error }) => {
+        }).select("id").single().then(({ data, error }) => {
           if (error) { console.warn("[proofs] DB insert failed:", error.message); return; }
-          // Non-blocking: append to transparency log
+          // Non-blocking: append to transparency log, then record index
           tlog.append({
             key_id: proof.key_binding?.key_id,
             status: verdict.status,
             crypto_suite: proof.signing?.crypto_suite,
+          }).then((entry: any) => {
+            if (data?.id && entry?.index !== undefined) {
+              supabase!.from("proofs")
+                .update({ tlog_index: entry.index })
+                .eq("id", data.id)
+                .then(() => {});
+            }
           }).catch(() => {});
         });
       }
@@ -318,12 +329,19 @@ app.post(
           outcome_basis:      proof.outcome?.basis,
           status:             verdict.status,
           proof_level:        verdict.proof_level ?? "BASIC",
-        }).then(({ error }) => {
+        }).select("id").single().then(({ data, error }) => {
           if (error) { console.warn("[proofs/submit] DB insert failed:", error.message); return; }
           tlog.append({
             key_id: proof.key_binding?.key_id,
             status: verdict.status,
             crypto_suite: proof.signing?.crypto_suite,
+          }).then((entry: any) => {
+            if (data?.id && entry?.index !== undefined) {
+              supabase!.from("proofs")
+                .update({ tlog_index: entry.index })
+                .eq("id", data.id)
+                .then(() => {});
+            }
           }).catch(() => {});
         });
       }
