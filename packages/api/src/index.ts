@@ -76,18 +76,18 @@ const auditLog = new AuditLog();
 // ── API key auth ──────────────────────────────────────────────────────────────
 const SERVER_KEY = process.env.IMMUVA_API_KEY ?? "";
 
-async function requireApiKey(request: any, reply: any, done: any) {
+async function requireApiKey(request: any, reply: any) {
   const key =
     (request.headers["x-api-key"] as string | undefined) ??
     (request.headers["authorization"] as string | undefined)?.replace("Bearer ", "");
 
   if (!key) {
-    return reply.status(401).send({ error: "UNAUTHORIZED", message: "Missing API key" });
+    reply.status(401).send({ error: "UNAUTHORIZED", message: "Missing API key" }); return;
   }
 
   // 1. Vérifie la clé serveur (rétrocompatibilité)
   if (SERVER_KEY && key === SERVER_KEY) {
-    return done();
+    return;
   }
 
   // 2. Vérifie les clés dashboard (sha256 lookup dans api_keys)
@@ -107,11 +107,11 @@ async function requireApiKey(request: any, reply: any, done: any) {
         .update({ last_used_at: new Date().toISOString() })
         .eq("id", data.id)
         .then(() => {});
-      return done();
+      return;
     }
   }
 
-  return reply.status(401).send({ error: "UNAUTHORIZED", message: "Invalid API key" });
+  reply.status(401).send({ error: "UNAUTHORIZED", message: "Invalid API key" }); return;
 }
 
 // ── Permission guard (applies after requireApiKey sets request.permissions) ───
@@ -169,7 +169,7 @@ app.get(
 app.post(
   "/v1/proofs",
   {
-    preHandler: [requireApiKey, requirePermission("proofs:write")],
+    preHandler: [requireApiKey, requirePermission("submit")],
     schema: {
       summary: "Generate a cryptographic proof",
       tags: ["Proofs"],
@@ -262,7 +262,7 @@ app.post(
 app.post(
   "/v1/proofs/submit",
   {
-    preHandler: [requireApiKey, requirePermission("proofs:write")],
+    preHandler: [requireApiKey, requirePermission("submit")],
     schema: {
       summary: "Submit a pre-signed proof",
       tags: ["Proofs"],
