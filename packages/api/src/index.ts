@@ -3,7 +3,7 @@ import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { loadSDK } from "./sdk-loader.js";
 import { WebhookRegistry } from "./webhooks.js";
@@ -135,6 +135,9 @@ app.addHook("onRequest", async (request: any) => {
 });
 
 app.addHook("onSend", async (request: any, reply) => {
+  // X-Request-ID — reuse Fastify's built-in request.id (uuid) or generate one
+  reply.header("X-Request-ID", (request.id as string | undefined) ?? randomUUID());
+
   const duration = Date.now() - (request._startTime ?? Date.now());
   const key = request.headers["x-api-key"] as string | undefined;
   auditLog.log({
